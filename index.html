@@ -1,0 +1,663 @@
+<title>לוּחַ בּוֹסְקוֹ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;700;900&display=swap">
+<script type="application/json" id="state">{"tasks":[],"songs":[],"rev":1}</script>
+<style>
+  :root {
+    --paper: #fcfcf9;
+    --ink: #191914;
+    --faint: #8a8a80;
+    --hairline: #b9b9ae;
+    --shade: #f1f0e9;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Frank Ruhl Libre', 'David Libre', 'Times New Roman', serif;
+    direction: rtl;
+    overflow: hidden;
+  }
+  #board {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+  /* ---- right pane: date, clock, tasks ---- */
+  #now-pane {
+    flex: 11;
+    display: flex;
+    flex-direction: column;
+    padding: 3.5vmin 4vmin 3vmin 3vmin;
+    border-left: 1px solid var(--hairline);
+    min-width: 0;
+  }
+  #date-line {
+    font-size: 2.6vmin;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+  }
+  #clock {
+    font-size: 8.2vmin;
+    line-height: 1.22;
+    font-weight: 900;
+    margin-top: 1.2vmin;
+    text-wrap: balance;
+  }
+  #tasks-block {
+    margin-top: auto;
+    padding-top: 2vmin;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 58%;
+  }
+  #tasks-title {
+    font-size: 3.4vmin;
+    font-weight: 700;
+    margin-bottom: 1.6vmin;
+  }
+  #task-list {
+    list-style: none;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  .task {
+    display: flex;
+    align-items: baseline;
+    gap: 1.6vmin;
+    padding: 0.9vmin 0;
+    font-size: 2.8vmin;
+    font-weight: 500;
+  }
+  .task .dot {
+    flex: none;
+    width: 2.4vmin; height: 2.4vmin;
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    align-self: center;
+    padding: 0;
+  }
+  .task.done .dot { background: var(--ink); }
+  .task.done .txt { text-decoration: line-through; color: var(--faint); }
+  .task .txt { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .task .del {
+    flex: none;
+    border: 0; background: none;
+    color: var(--faint);
+    font-family: inherit;
+    font-size: 2.4vmin;
+    cursor: pointer;
+    visibility: hidden;
+    align-self: center;
+  }
+  .task.done .del { visibility: visible; }
+  #add-row {
+    display: flex;
+    gap: 1.2vmin;
+    align-items: center;
+    padding-top: 1.4vmin;
+    margin-top: 0.6vmin;
+    border-top: 1px solid var(--hairline);
+  }
+  #add-row select, #add-row input, #add-row button {
+    font-family: inherit;
+    font-size: 2.5vmin;
+    color: var(--ink);
+    background: var(--paper);
+    border: 0;
+  }
+  #add-row select {
+    border-bottom: 1px solid var(--hairline);
+    padding: 0.4vmin 0;
+  }
+  #add-row input {
+    flex: 1;
+    min-width: 0;
+    border-bottom: 1px solid var(--hairline);
+    padding: 0.4vmin 0.2vmin;
+  }
+  #add-row input:focus, #add-row select:focus { outline: none; border-bottom-color: var(--ink); }
+  #add-row button {
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    width: 4vmin; height: 4vmin;
+    line-height: 1;
+    font-size: 3vmin;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  #add-row button:focus-visible, .dot:focus-visible, .del:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  /* ---- song of the day ---- */
+  #song-block { margin-top: 2.4vmin; }
+  #song-row { display: flex; align-items: center; gap: 1.8vmin; }
+  #play-song {
+    width: 7vmin; height: 7vmin;
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 3vmin;
+    cursor: pointer;
+    padding-right: 0.6vmin; /* optical centering of the triangle */
+  }
+  #play-song:active { background: var(--ink); color: var(--paper); }
+  #song-label { font-size: 3vmin; font-weight: 700; }
+  #manage-songs {
+    border: 0; background: none;
+    color: var(--faint);
+    font-family: inherit;
+    font-size: 3.2vmin;
+    cursor: pointer;
+    margin-right: auto;
+  }
+  #play-song:focus-visible, #manage-songs:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  #song-manager { margin-top: 1vmin; }
+  #song-list { list-style: none; max-height: 18vmin; overflow-y: auto; }
+  #song-list li {
+    display: flex; align-items: center; gap: 1.2vmin;
+    font-size: 2.3vmin; padding: 0.4vmin 0; color: var(--ink);
+  }
+  #song-list .del-song {
+    border: 0; background: none; color: var(--faint);
+    font-family: inherit; font-size: 2.2vmin; cursor: pointer;
+  }
+  #add-song { display: flex; gap: 1.2vmin; align-items: center; margin-top: 0.6vmin; }
+  #add-song input {
+    font-family: inherit; font-size: 2.2vmin; color: var(--ink);
+    background: var(--paper); border: 0;
+    border-bottom: 1px solid var(--hairline);
+    padding: 0.3vmin 0.2vmin; min-width: 0;
+  }
+  #add-song #song-url { flex: 3; direction: ltr; text-align: left; }
+  #add-song #song-name { flex: 2; }
+  #add-song button {
+    font-family: inherit; font-size: 2.6vmin; color: var(--ink);
+    background: var(--paper); border: 1.5px solid var(--ink);
+    border-radius: 50%; width: 3.4vmin; height: 3.4vmin; line-height: 1; cursor: pointer;
+  }
+  #add-song input:focus { outline: none; border-bottom-color: var(--ink); }
+  #note {
+    font-size: 1.9vmin;
+    color: var(--faint);
+    margin-top: 1vmin;
+    min-height: 2.4vmin;
+  }
+  /* ---- embedded player ---- */
+  #player-overlay {
+    position: fixed; inset: 0;
+    background: rgba(25, 25, 20, 0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10;
+  }
+  #player-box {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    width: min(88vw, 150vmin);
+    max-width: 900px;
+    padding: 2vmin;
+  }
+  #player-frame-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--shade);
+  }
+  #player-frame-wrap iframe {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: 0;
+  }
+  #player-bar {
+    display: flex; align-items: center; gap: 2vmin;
+    margin-top: 1.4vmin;
+  }
+  #player-title { font-weight: 700; font-size: 2.8vmin; flex: 1; min-width: 0; }
+  #player-bar button {
+    font-family: inherit; font-size: 2.3vmin;
+    color: var(--ink); background: var(--paper);
+    border: 1.5px solid var(--ink);
+    padding: 0.5vmin 1.6vmin;
+    cursor: pointer;
+  }
+  #player-bar button:active { background: var(--ink); color: var(--paper); }
+  #open-yt { font-size: 1.9vmin; color: var(--faint); }
+  #player-bar button:focus-visible, #open-yt:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  /* ---- left pane: schedule ---- */
+  #schedule-pane {
+    flex: 14;
+    padding: 3.5vmin 3vmin;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  #schedule {
+    flex: 1;
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+  }
+  #schedule th, #schedule td {
+    border: 1px solid var(--hairline);
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.6vmin 0.5vmin;
+    font-size: 2.4vmin;
+    font-weight: 500;
+    overflow: hidden;
+  }
+  #schedule th {
+    font-size: 2.9vmin;
+    font-weight: 700;
+    padding: 1vmin 0.5vmin;
+  }
+  #schedule .hourcol {
+    width: 24%;
+    font-weight: 400;
+  }
+  #schedule .hourcol .hname { display: block; font-weight: 500; }
+  #schedule .hourcol .htime {
+    display: block;
+    font-size: 1.9vmin;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+    direction: ltr;
+  }
+  #schedule tr.break td { background: var(--shade); font-size: 2vmin; padding: 0.4vmin; }
+  #schedule tr.after td { height: 16%; font-weight: 400; color: var(--faint); }
+  #schedule td.empty { color: var(--faint); }
+  #offday {
+    flex: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 11vmin;
+    font-weight: 900;
+    border: 1px solid var(--hairline);
+  }
+  /* portrait: stack */
+  @media (orientation: portrait) {
+    #board { flex-direction: column; }
+    #now-pane { border-left: 0; border-bottom: 1px solid var(--hairline); flex: 0 0 46%; }
+    #tasks-block { max-height: 62%; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .task .dot { transition: background 0.15s; }
+  }
+</style>
+
+<div id="board">
+  <main id="now-pane">
+    <div id="date-line">—</div>
+    <div id="clock">—</div>
+    <section id="song-block">
+      <div id="song-row">
+        <button id="play-song" aria-label="נגינת שיר אקראי מרשימת שיר היום">▶</button>
+        <span id="song-label">שִׁיר הַיּוֹם</span>
+        <button id="manage-songs" aria-label="ניהול רשימת השירים">+</button>
+      </div>
+      <div id="song-manager" hidden>
+        <ul id="song-list"></ul>
+        <form id="add-song">
+          <input id="song-url" type="url" placeholder="הדביקו קישור יוטיוב" aria-label="קישור יוטיוב" required>
+          <input id="song-name" type="text" placeholder="שם השיר" aria-label="שם השיר" maxlength="60">
+          <button type="submit" aria-label="הוספת שיר">+</button>
+        </form>
+      </div>
+    </section>
+    <section id="tasks-block">
+      <div id="tasks-title">מְשִׂימוֹת לְהַיּוֹם:</div>
+      <ul id="task-list"></ul>
+      <form id="add-row">
+        <select id="who" aria-label="מי">
+          <option>גולי</option>
+          <option>אורי</option>
+          <option>שי</option>
+          <option>אמא</option>
+          <option>אבא</option>
+          <option>כולם</option>
+        </select>
+        <input id="what" type="text" placeholder="משימה חדשה" aria-label="משימה חדשה" maxlength="80">
+        <button type="submit" aria-label="הוספת משימה">+</button>
+      </form>
+      <div id="note"></div>
+    </section>
+  </main>
+  <aside id="schedule-pane">
+    <table id="schedule" aria-label="מערכת השעות של היום">
+      <thead>
+        <tr><th style="width:38%">גּוֹלִי</th><th class="hourcol">שָׁעָה</th><th style="width:38%">אוֹרִי</th></tr>
+      </thead>
+      <tbody id="schedule-body"></tbody>
+    </table>
+    <div id="offday">—</div>
+  </aside>
+</div>
+
+<div id="player-overlay" hidden>
+  <div id="player-box">
+    <div id="player-frame-wrap"></div>
+    <div id="player-bar">
+      <span id="player-title"></span>
+      <a id="open-yt" target="_blank" rel="noopener">לא מתנגן? פתיחה ביוטיוב</a>
+      <button id="next-song" type="button">שיר אחר</button>
+      <button id="close-player" type="button" aria-label="סגירת הנגן">✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- pristine source captured before any mutation ---------- */
+  var PRISTINE = null;
+
+  /* ---------- vocalized Hebrew lexicon ---------- */
+  var DAY_NAMES = ["יוֹם רִאשׁוֹן", "יוֹם שֵׁנִי", "יוֹם שְׁלִישִׁי", "יוֹם רְבִיעִי", "יוֹם חֲמִישִׁי", "יוֹם שִׁישִׁי", "שַׁבָּת"]; // 0=Sunday
+  var MONTHS_L = ["לְיָנוּאָר", "לְפֶבְּרוּאָר", "לְמֵרְץ", "לְאַפְּרִיל", "לְמַאי", "לְיוּנִי", "לְיוּלִי", "לְאוֹגוּסְט", "לְסֶפְּטֶמְבֶּר", "לְאוֹקְטוֹבֶּר", "לְנוֹבֶמְבֶּר", "לְדֶצֶמְבֶּר"];
+  var ORDINALS = [null,
+    "הָאֶחָד", "הַשְּׁנַיִם", "הַשְּׁלוֹשָׁה", "הָאַרְבָּעָה", "הַחֲמִשָּׁה", "הַשִּׁשָּׁה", "הַשִּׁבְעָה", "הַשְּׁמוֹנָה", "הַתִּשְׁעָה", "הָעֲשָׂרָה",
+    "הָאַחַד עָשָׂר", "הַשְּׁנֵים עָשָׂר", "הַשְּׁלוֹשָׁה עָשָׂר", "הָאַרְבָּעָה עָשָׂר", "הַחֲמִשָּׁה עָשָׂר", "הַשִּׁשָּׁה עָשָׂר", "הַשִּׁבְעָה עָשָׂר", "הַשְּׁמוֹנָה עָשָׂר", "הַתִּשְׁעָה עָשָׂר", "הָעֶשְׂרִים",
+    "הָעֶשְׂרִים וְאֶחָד", "הָעֶשְׂרִים וּשְׁנַיִם", "הָעֶשְׂרִים וּשְׁלוֹשָׁה", "הָעֶשְׂרִים וְאַרְבָּעָה", "הָעֶשְׂרִים וַחֲמִשָּׁה", "הָעֶשְׂרִים וְשִׁשָּׁה", "הָעֶשְׂרִים וְשִׁבְעָה", "הָעֶשְׂרִים וּשְׁמוֹנָה", "הָעֶשְׂרִים וְתִשְׁעָה", "הַשְּׁלוֹשִׁים",
+    "הַשְּׁלוֹשִׁים וְאֶחָד"];
+  var HOURS_F = [null, "אַחַת", "שְׁתַּיִם", "שָׁלוֹשׁ", "אַרְבַּע", "חָמֵשׁ", "שֵׁשׁ", "שֶׁבַע", "שְׁמוֹנֶה", "תֵּשַׁע", "עֶשֶׂר", "אַחַת עֶשְׂרֵה", "שְׁתֵּים עֶשְׂרֵה"];
+  var MIN_UNITS_DAKOT = [null, "וְדַקָּה", "וּשְׁתֵּי דַּקּוֹת", "וְשָׁלוֹשׁ דַּקּוֹת", "וְאַרְבַּע דַּקּוֹת", "וְחָמֵשׁ דַּקּוֹת", "וְשֵׁשׁ דַּקּוֹת", "וְשֶׁבַע דַּקּוֹת", "וּשְׁמוֹנֶה דַּקּוֹת", "וְתֵשַׁע דַּקּוֹת"];
+  var MIN_TEENS = ["וָעֶשֶׂר", "וְאַחַת עֶשְׂרֵה", "וּשְׁתֵּים עֶשְׂרֵה", "וּשְׁלוֹשׁ עֶשְׂרֵה", "וְאַרְבַּע עֶשְׂרֵה", "וָרֶבַע", "וְשֵׁשׁ עֶשְׂרֵה", "וּשְׁבַע עֶשְׂרֵה", "וּשְׁמוֹנֶה עֶשְׂרֵה", "וּתְשַׁע עֶשְׂרֵה"];
+  var TENS_VAV = { 20: "וְעֶשְׂרִים", 30: "וָחֵצִי", 40: "וְאַרְבָּעִים", 50: "וַחֲמִישִׁים" };
+  var TENS_BARE = { 20: "עֶשְׂרִים", 30: "שְׁלוֹשִׁים", 40: "אַרְבָּעִים", 50: "חֲמִישִׁים" };
+  var UNITS_VAV = [null, "וְאַחַת", "וּשְׁתַּיִם", "וְשָׁלוֹשׁ", "וְאַרְבַּע", "וְחָמֵשׁ", "וְשֵׁשׁ", "וְשֶׁבַע", "וּשְׁמוֹנֶה", "וְתֵשַׁע"];
+
+  function periodOf(h24) {
+    if (h24 >= 5 && h24 <= 11) return "בַּבֹּקֶר";
+    if (h24 >= 12 && h24 <= 13) return "בַּצָּהֳרַיִם";
+    if (h24 >= 14 && h24 <= 16) return "אַחַר הַצָּהֳרַיִם";
+    if (h24 >= 17 && h24 <= 21) return "בָּעֶרֶב";
+    return "בַּלַּיְלָה";
+  }
+
+  function timeInWords(h24, m) {
+    var h12 = h24 % 12; if (h12 === 0) h12 = 12;
+    var hour = HOURS_F[h12];
+    var phrase;
+    if (m === 0) phrase = hour + " בְּדִיּוּק";
+    else if (m < 10) phrase = hour + " " + MIN_UNITS_DAKOT[m];
+    else if (m < 20) phrase = hour + " " + MIN_TEENS[m - 10];
+    else {
+      var t = Math.floor(m / 10) * 10, u = m % 10;
+      phrase = u === 0 ? hour + " " + TENS_VAV[t] : hour + " " + TENS_BARE[t] + " " + UNITS_VAV[u];
+    }
+    return phrase + " " + periodOf(h24);
+  }
+
+  function dateInWords(d) {
+    return DAY_NAMES[d.getDay()] + ", " + ORDINALS[d.getDate()] + " " + MONTHS_L[d.getMonth()] + " " + d.getFullYear();
+  }
+
+  /* ---------- school data ---------- */
+  var YEAR_START = "2026-09-01", YEAR_END = "2027-06-30";
+  var NO_SCHOOL = [
+    ["2026-09-11", "2026-09-13"], ["2026-09-20", "2026-09-21"], ["2026-09-25", "2026-10-03"],
+    ["2026-12-05", "2026-12-12"], ["2027-03-23", "2027-03-24"], ["2027-04-13", "2027-04-28"],
+    ["2027-05-12", "2027-05-12"], ["2027-05-25", "2027-05-25"], ["2027-06-10", "2027-06-12"]
+  ];
+  var HOURS_ROWS = [
+    { kind: "lesson", idx: 0, name: "שעה ראשונה", time: "8:00–8:45" },
+    { kind: "lesson", idx: 1, name: "שעה שנייה", time: "8:45–9:30" },
+    { kind: "break1", name: "הפסקה", time: "9:30–10:20" },
+    { kind: "lesson", idx: 2, name: "שעה שלישית", time: "10:20–11:05" },
+    { kind: "lesson", idx: 3, name: "שעה רביעית", time: "11:05–11:50" },
+    { kind: "break2", name: "הפסקה קטנה", time: "11:50–12:05" },
+    { kind: "lesson", idx: 4, name: "שעה חמישית", time: "12:05–12:45" },
+    { kind: "lesson", idx: 5, name: "שעה שישית", time: "12:45–13:30" },
+    { kind: "after", name: "אחר הצהריים" }
+  ];
+  // Guli (grade 4), by weekday 0=Sunday .. 5=Friday, six lesson slots
+  var GULI = [
+    ["חינוך גופני", "כישורי חיים", "שפה", "קורס בחירה", "קורס בחירה", ""],
+    ["אנגלית", "אנגלית", "אומנות/מייקרים", "אומנות/מייקרים", "מתמטיקה", ""],
+    ["שפה", "מתמטיקה", "מתמטיקה", "מדעים", "חינוך גופני", ""],
+    ["שפה", "שפה", "תנ\"ך", "אנגלית", "מתמטיקה", "מתמטיקה"],
+    ["פל\"א", "מתמטיקה", "שפה", "אנגלית", "מולדת", "מדעים"],
+    ["מרחב גמיש", "מרחב גמיש", "שבילי מורשת", "כישורי חיים", "", ""]
+  ];
+  var ORI = null; // grade 2 schedule pending
+
+  function iso(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function schoolStatus(d) {
+    var s = iso(d);
+    if (d.getDay() === 6) return "שַׁבָּת";
+    if (s < YEAR_START) return "הַחֹפֶשׁ הַגָּדוֹל";
+    if (s > YEAR_END) return "הַחֹפֶשׁ הַגָּדוֹל";
+    for (var i = 0; i < NO_SCHOOL.length; i++) {
+      if (s >= NO_SCHOOL[i][0] && s <= NO_SCHOOL[i][1]) return "חֻפְשָׁה";
+    }
+    return null;
+  }
+
+  function esc(t) {
+    return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function renderSchedule(d) {
+    var off = schoolStatus(d);
+    var table = document.getElementById("schedule");
+    var offEl = document.getElementById("offday");
+    if (off) {
+      table.style.display = "none";
+      offEl.style.display = "flex";
+      offEl.textContent = off;
+      return;
+    }
+    table.style.display = "";
+    offEl.style.display = "none";
+    var day = d.getDay();
+    var guli = GULI[day] || ["", "", "", "", "", ""];
+    var ori = ORI ? (ORI[day] || ["", "", "", "", "", ""]) : null;
+    var html = "";
+    HOURS_ROWS.forEach(function (row) {
+      if (row.kind === "lesson") {
+        var g = guli[row.idx], o = ori ? ori[row.idx] : "";
+        html += "<tr><td" + (g ? "" : " class='empty'") + ">" + esc(g) + "</td>" +
+          "<td class='hourcol'><span class='hname'>" + row.name + "</span><span class='htime'>" + row.time + "</span></td>" +
+          "<td" + (o ? "" : " class='empty'") + ">" + esc(o) + "</td></tr>";
+      } else if (row.kind === "break1") {
+        html += "<tr class='break'><td>חָצֵר, אַחַר כָּךְ אֹכֶל</td>" +
+          "<td class='hourcol'><span class='hname'>" + row.name + "</span><span class='htime'>" + row.time + "</span></td>" +
+          "<td>אֹכֶל, אַחַר כָּךְ חָצֵר</td></tr>";
+      } else if (row.kind === "break2") {
+        html += "<tr class='break'><td></td>" +
+          "<td class='hourcol'><span class='hname'>" + row.name + "</span><span class='htime'>" + row.time + "</span></td>" +
+          "<td></td></tr>";
+      } else {
+        html += "<tr class='after'><td></td><td class='hourcol'>" + row.name + "</td><td></td></tr>";
+      }
+    });
+    document.getElementById("schedule-body").innerHTML = html;
+  }
+
+  /* ---------- clock ---------- */
+  var shownDate = "";
+  function tick() {
+    var now = new Date();
+    document.getElementById("clock").textContent = timeInWords(now.getHours(), now.getMinutes());
+    var ds = iso(now);
+    if (ds !== shownDate) {
+      shownDate = ds;
+      document.getElementById("date-line").textContent = dateInWords(now);
+      renderSchedule(now);
+    }
+  }
+
+  /* ---------- state: artifact self-publish on claude.ai, localStorage elsewhere ---------- */
+  var IS_ARTIFACT = !!(window.claude && window.claude.use);
+  var LS_KEY = "bosco-board-state";
+  var state = JSON.parse(document.getElementById("state").textContent);
+  if (!IS_ARTIFACT) {
+    try {
+      var saved = localStorage.getItem(LS_KEY);
+      if (saved) state = JSON.parse(saved);
+    } catch (e) { /* localStorage unavailable: keep embedded default */ }
+  }
+  var artifactNS = null;
+  var canWrite = true;
+
+  function renderTasks() {
+    var ul = document.getElementById("task-list");
+    ul.innerHTML = state.tasks.map(function (t) {
+      return "<li class='task" + (t.done ? " done" : "") + "' data-id='" + t.id + "'>" +
+        "<button class='dot' aria-label='סימון ביצוע'></button>" +
+        "<span class='txt'>" + esc(t.who) + " - " + esc(t.text) + "</span>" +
+        "<button class='del' aria-label='מחיקה'>✕</button></li>";
+    }).join("");
+  }
+
+  function note(msg) { document.getElementById("note").textContent = msg || ""; }
+
+  var publishTimer = null;
+  function schedulePublish() {
+    if (publishTimer) clearTimeout(publishTimer);
+    publishTimer = setTimeout(doPublish, 900);
+  }
+  function doPublish() {
+    publishTimer = null;
+    if (!IS_ARTIFACT) {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* private mode etc. */ }
+      return;
+    }
+    if (!PRISTINE) return;
+    if (!artifactNS) { note("השינוי נשמר רק במסך הזה. פתחו את הלוח מחשבון עם הרשאת עריכה כדי לשמור לכולם."); return; }
+    state.rev = (state.rev || 0) + 1;
+    var json = JSON.stringify(state).replace(/</g, "\\u003c");
+    var doc = PRISTINE.replace(/<script type="application\/json" id="state">[\s\S]*?<\/script>/,
+      function () { return '<script type="application/json" id="state">' + json + "<\/script>"; });
+    artifactNS.publish("<!DOCTYPE html>\n" + doc).catch(function (e) {
+      if (e && e.code === "conflict") return; // someone else published; view reloads to the winner
+      canWrite = false;
+      note("אין הרשאת שמירה מהמכשיר הזה. השינוי נשאר רק במסך הזה.");
+    });
+  }
+
+  document.getElementById("task-list").addEventListener("click", function (ev) {
+    var li = ev.target.closest(".task");
+    if (!li) return;
+    var id = Number(li.getAttribute("data-id"));
+    var t = state.tasks.find(function (x) { return x.id === id; });
+    if (!t) return;
+    if (ev.target.classList.contains("dot")) { t.done = !t.done; renderTasks(); schedulePublish(); }
+    if (ev.target.classList.contains("del")) {
+      state.tasks = state.tasks.filter(function (x) { return x.id !== id; });
+      renderTasks(); schedulePublish();
+    }
+  });
+
+  document.getElementById("add-row").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var input = document.getElementById("what");
+    var text = input.value.trim();
+    if (!text) return;
+    var who = document.getElementById("who").value;
+    var maxId = state.tasks.reduce(function (m, t) { return Math.max(m, t.id); }, 0);
+    state.tasks.push({ id: maxId + 1, who: who, text: text, done: false });
+    input.value = "";
+    renderTasks(); schedulePublish();
+  });
+
+  /* ---------- song of the day ---------- */
+  state.songs = state.songs || [];
+  var lastPlayedId = null;
+
+  function ytId(url) {
+    var m = String(url).match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/);
+    return m ? m[1] : null;
+  }
+
+  function renderSongs() {
+    var ul = document.getElementById("song-list");
+    ul.innerHTML = state.songs.length
+      ? state.songs.map(function (s) {
+          return "<li data-id='" + s.id + "'><button class='del-song' aria-label='הסרת שיר'>✕</button><span>" + esc(s.title) + "</span></li>";
+        }).join("")
+      : "<li>הרשימה ריקה. הדביקו למטה קישור יוטיוב.</li>";
+  }
+
+  function showPlayer(song) {
+    lastPlayedId = song.id;
+    document.getElementById("player-title").textContent = song.title;
+    document.getElementById("open-yt").href = "https://www.youtube.com/watch?v=" + song.videoId;
+    document.getElementById("player-frame-wrap").innerHTML =
+      "<iframe src='https://www.youtube-nocookie.com/embed/" + song.videoId +
+      "?autoplay=1&rel=0' allow='autoplay; encrypted-media; fullscreen' title='" + esc(song.title) + "'></iframe>";
+    document.getElementById("player-overlay").hidden = false;
+  }
+
+  function closePlayer() {
+    document.getElementById("player-overlay").hidden = true;
+    document.getElementById("player-frame-wrap").innerHTML = "";
+  }
+
+  function playRandom() {
+    if (!state.songs.length) {
+      document.getElementById("song-manager").hidden = false;
+      note("עוד אין שירים ברשימה. הוסיפו קישור יוטיוב ולחצו שוב על פליי.");
+      return;
+    }
+    var pool = state.songs.length > 1
+      ? state.songs.filter(function (s) { return s.id !== lastPlayedId; })
+      : state.songs;
+    showPlayer(pool[Math.floor(Math.random() * pool.length)]);
+  }
+
+  document.getElementById("play-song").addEventListener("click", playRandom);
+  document.getElementById("next-song").addEventListener("click", playRandom);
+  document.getElementById("close-player").addEventListener("click", closePlayer);
+  document.getElementById("player-overlay").addEventListener("click", function (ev) {
+    if (ev.target === this) closePlayer();
+  });
+
+  document.getElementById("manage-songs").addEventListener("click", function () {
+    var m = document.getElementById("song-manager");
+    m.hidden = !m.hidden;
+  });
+
+  document.getElementById("song-list").addEventListener("click", function (ev) {
+    if (!ev.target.classList.contains("del-song")) return;
+    var li = ev.target.closest("li");
+    var id = Number(li.getAttribute("data-id"));
+    state.songs = state.songs.filter(function (s) { return s.id !== id; });
+    renderSongs(); schedulePublish();
+  });
+
+  document.getElementById("add-song").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var urlInput = document.getElementById("song-url");
+    var nameInput = document.getElementById("song-name");
+    var vid = ytId(urlInput.value.trim());
+    if (!vid) { note("הקישור לא נראה כמו קישור יוטיוב תקין."); return; }
+    var maxId = state.songs.reduce(function (m, s) { return Math.max(m, s.id); }, 0);
+    var title = nameInput.value.trim() || ("שיר " + (state.songs.length + 1));
+    state.songs.push({ id: maxId + 1, videoId: vid, title: title });
+    urlInput.value = ""; nameInput.value = "";
+    note("");
+    renderSongs(); schedulePublish();
+  });
+
+  /* ---------- boot ---------- */
+  document.addEventListener("DOMContentLoaded", function () {
+    PRISTINE = document.documentElement.outerHTML;
+    renderTasks();
+    renderSongs();
+    tick();
+    setInterval(tick, 20000);
+    if (window.claude && window.claude.use) {
+      window.claude.use("artifact").then(function (ns) { artifactNS = ns; });
+    }
+  });
+})();
+</script>
