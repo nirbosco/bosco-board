@@ -288,12 +288,14 @@
   #offday {
     flex: 1;
     display: none;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 11vmin;
-    font-weight: 900;
+    gap: 2vmin;
     border: 1px solid var(--hairline);
   }
+  #offday-word { font-size: 11vmin; font-weight: 900; }
+  #offday-sub { font-size: 3vmin; font-weight: 400; color: var(--faint); }
   /* portrait: stack */
   @media (orientation: portrait) {
     #board { flex-direction: column; }
@@ -349,7 +351,7 @@
       </thead>
       <tbody id="schedule-body"></tbody>
     </table>
-    <div id="offday">—</div>
+    <div id="offday"><div id="offday-word">—</div><div id="offday-sub"></div></div>
   </aside>
 </div>
 
@@ -449,11 +451,33 @@
     var s = iso(d);
     if (d.getDay() === 6) return "שַׁבָּת";
     if (s < YEAR_START) return "הַחֹפֶשׁ הַגָּדוֹל";
-    if (s > YEAR_END) return "הַחֹפֶשׁ הַגָּדוֹל";
+    if (s > YEAR_END && s < "2027-09-01") return "הַחֹפֶשׁ הַגָּדוֹל";
     for (var i = 0; i < NO_SCHOOL.length; i++) {
       if (s >= NO_SCHOOL[i][0] && s <= NO_SCHOOL[i][1]) return "חֻפְשָׁה";
     }
     return null;
+  }
+
+  var DAYS_MASC = [null, null, null, "שְׁלוֹשָׁה", "אַרְבָּעָה", "חֲמִישָּׁה", "שִׁישָּׁה", null, "שְׁמוֹנָה", "תִּשְׁעָה", "עֲשָׂרָה",
+    "אַחַד עָשָׂר", "שְׁנֵים עָשָׂר", "שְׁלוֹשָׁה עָשָׂר", null, "חֲמִישָּׁה עָשָׂר", "שִׁישָּׁה עָשָׂר", "שִׁבְעָה עָשָׂר", "שְׁמוֹנָה עָשָׂר", "תִּשְׁעָה עָשָׂר", "עֶשְׂרִים"];
+
+  function backToSchoolLine(d) {
+    var t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var days = 0;
+    for (var i = 0; i < 450; i++) {
+      t = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1);
+      days++;
+      if (!schoolStatus(t)) break;
+    }
+    if (days >= 450) return "";
+    var when;
+    if (days === 1) when = "מָחָר";
+    else if (days === 2) when = "מָחֳרָתַיִם";
+    else if (days === 7) when = "בְּעוֹד שָׁבוּעַ";
+    else if (days === 14) when = "בְּעוֹד שְׁבוּעַיִם";
+    else if (days <= 20 && DAYS_MASC[days]) when = "בְּעוֹד " + DAYS_MASC[days] + " יָמִים";
+    else when = "בְּ-1 בְּסֶפְּטֶמְבֶּר";
+    return "חוֹזְרִים לַלִּימוּדִים " + when;
   }
 
   function esc(t) {
@@ -467,7 +491,8 @@
     if (off) {
       table.style.display = "none";
       offEl.style.display = "flex";
-      offEl.textContent = off;
+      document.getElementById("offday-word").textContent = off;
+      document.getElementById("offday-sub").textContent = backToSchoolLine(d);
       return;
     }
     table.style.display = "";
