@@ -40,11 +40,25 @@
     color: var(--ink);
   }
   #clock {
-    font-size: 8.2vmin;
-    line-height: 1.22;
+    font-size: 10.5vmin;
+    line-height: 1.18;
     font-weight: 900;
     margin-top: 1.2vmin;
     text-wrap: balance;
+  }
+  /* letter-level clock transitions */
+  .w { display: inline-block; }
+  .g { display: inline-block; }
+  .g.out { animation: g-out 0.42s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; }
+  .g.in { animation: g-in 0.6s cubic-bezier(0.15, 0.6, 0.2, 1) backwards; }
+  @keyframes g-out {
+    to { opacity: 0; transform: translateY(-0.16em); filter: blur(3px); }
+  }
+  @keyframes g-in {
+    from { opacity: 0; transform: translateY(0.18em); filter: blur(3px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .g.out, .g.in { animation: none; }
   }
   #tasks-block {
     margin-top: auto;
@@ -483,17 +497,91 @@
     document.getElementById("schedule-body").innerHTML = html;
   }
 
-  /* ---------- clock ---------- */
+  /* ---------- clock: minute-exact ticking with letter transitions ---------- */
+  var REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function graphemes(word) {
+    if (window.Intl && Intl.Segmenter) {
+      try {
+        return Array.from(new Intl.Segmenter("he", { granularity: "grapheme" }).segment(word),
+          function (s) { return s.segment; });
+      } catch (e) { /* fall through */ }
+    }
+    return word.match(/(\p{L}\p{M}*|.)/gsu) || [word];
+  }
+
+  function renderPhrase(el, words, animRange) {
+    el.textContent = "";
+    var gi = 0;
+    words.forEach(function (w, wi) {
+      if (wi > 0) el.appendChild(document.createTextNode(" "));
+      var ws = document.createElement("span");
+      ws.className = "w";
+      // a run of digits must stay one LTR unit, or separate spans reverse it visually
+      var parts = /^[0-9][0-9.:\/-]*$/.test(w) ? [w] : graphemes(w);
+      if (parts.length === 1 && parts[0] === w && /[0-9]/.test(w)) ws.dir = "ltr";
+      parts.forEach(function (g) {
+        var gs = document.createElement("span");
+        gs.className = "g";
+        gs.textContent = g;
+        if (animRange && wi >= animRange.start && wi < animRange.end) {
+          gs.classList.add("in");
+          gs.style.animationDelay = (gi * 40) + "ms";
+          gi++;
+        }
+        ws.appendChild(gs);
+      });
+      el.appendChild(ws);
+    });
+  }
+
+  function setPhrase(el, phrase) {
+    var old = el.dataset.phrase || "";
+    if (old === phrase) return;
+    el.dataset.phrase = phrase;
+    var newWords = phrase.split(" ");
+    if (!old || REDUCED) { renderPhrase(el, newWords, null); return; }
+    var oldWords = old.split(" ");
+    // unchanged words at the edges stay put; only the middle animates
+    var p = 0;
+    while (p < oldWords.length && p < newWords.length && oldWords[p] === newWords[p]) p++;
+    var s = 0;
+    while (s < oldWords.length - p && s < newWords.length - p &&
+      oldWords[oldWords.length - 1 - s] === newWords[newWords.length - 1 - s]) s++;
+    var wordEls = el.querySelectorAll(".w");
+    var gi = 0;
+    for (var i = p; i < oldWords.length - s && i < wordEls.length; i++) {
+      var gl = wordEls[i].querySelectorAll(".g");
+      for (var j = 0; j < gl.length; j++) {
+        gl[j].classList.remove("in");
+        gl[j].style.animationDelay = (gi * 28) + "ms";
+        gl[j].classList.add("out");
+        gi++;
+      }
+    }
+    var outTotal = gi ? Math.min(420 + gi * 28, 850) : 0;
+    setTimeout(function () {
+      if (el.dataset.phrase !== phrase) return; // a newer phrase already took over
+      renderPhrase(el, newWords, { start: p, end: newWords.length - s });
+    }, outTotal);
+  }
+
   var shownDate = "";
   function tick() {
     var now = new Date();
-    document.getElementById("clock").textContent = timeInWords(now.getHours(), now.getMinutes());
+    setPhrase(document.getElementById("clock"), timeInWords(now.getHours(), now.getMinutes()));
     var ds = iso(now);
     if (ds !== shownDate) {
       shownDate = ds;
-      document.getElementById("date-line").textContent = dateInWords(now);
+      setPhrase(document.getElementById("date-line"), dateInWords(now));
       renderSchedule(now);
     }
+  }
+
+  function scheduleTick() {
+    var now = new Date();
+    var delay = 60000 - (now.getSeconds() * 1000 + now.getMilliseconds()) + 40;
+    setTimeout(function () { tick(); scheduleTick(); }, delay);
   }
 
   /* ---------- state: artifact self-publish on claude.ai, localStorage elsewhere ---------- */
@@ -655,7 +743,10 @@
     renderTasks();
     renderSongs();
     tick();
-    setInterval(tick, 20000);
+    scheduleTick();
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) tick(); // resync instantly when the screen wakes
+    });
     if (window.claude && window.claude.use) {
       window.claude.use("artifact").then(function (ns) { artifactNS = ns; });
     }
