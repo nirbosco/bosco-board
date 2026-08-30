@@ -296,11 +296,53 @@
   }
   #offday-word { font-size: 11vmin; font-weight: 900; }
   #offday-sub { font-size: 3vmin; font-weight: 400; color: var(--faint); }
-  /* portrait: stack */
+  /* portrait / phone: stacked, scrollable, sized by width */
   @media (orientation: portrait) {
-    #board { flex-direction: column; }
-    #now-pane { border-left: 0; border-bottom: 1px solid var(--hairline); flex: 0 0 46%; }
-    #tasks-block { max-height: 62%; }
+    html, body { height: auto; }
+    body { overflow: auto; }
+    #board { flex-direction: column; height: auto; min-height: 100vh; width: auto; }
+    #now-pane {
+      border-left: 0;
+      border-bottom: 1px solid var(--hairline);
+      padding: 5vw 5vw 6vw;
+    }
+    #date-line { font-size: 4.2vw; }
+    #clock { font-size: 12vw; }
+    #song-block { margin-top: 5vw; }
+    #song-row { gap: 3vw; }
+    #play-song { width: 11vw; height: 11vw; font-size: 4.6vw; padding-right: 1vw; }
+    #song-label { font-size: 5vw; }
+    #manage-songs { font-size: 5.5vw; }
+    #song-manager { margin-top: 2vw; }
+    #song-list { max-height: 34vw; }
+    #song-list li { font-size: 4vw; gap: 2vw; padding: 1vw 0; }
+    #song-list .del-song { font-size: 4vw; }
+    #add-song { gap: 2vw; margin-top: 1.5vw; }
+    #add-song input { font-size: 4vw; padding: 0.8vw 0.4vw; }
+    #add-song button { font-size: 4.6vw; width: 6.5vw; height: 6.5vw; }
+    #tasks-block { max-height: none; margin-top: 7vw; padding-top: 0; }
+    #tasks-title { font-size: 5.5vw; margin-bottom: 2.5vw; }
+    #task-list { overflow-y: visible; }
+    .task { font-size: 4.6vw; gap: 3vw; padding: 1.6vw 0; }
+    .task .dot { width: 4.4vw; height: 4.4vw; }
+    .task .del { font-size: 4vw; }
+    #add-row { gap: 2.5vw; padding-top: 2.5vw; }
+    #add-row select, #add-row input { font-size: 4.2vw; padding: 0.8vw 0.4vw; }
+    #add-row button { width: 7.5vw; height: 7.5vw; font-size: 5.5vw; }
+    #note { font-size: 3.4vw; min-height: 4.5vw; }
+    #schedule-pane { padding: 5vw 4vw 6vw; }
+    #schedule th { font-size: 4.6vw; padding: 2vw 1vw; }
+    #schedule th.hourcol, #schedule td.hourcol { width: 28%; }
+    #schedule td { font-size: 3.9vw; padding: 1.8vw 1vw; }
+    #schedule .hourcol .htime { font-size: 3vw; }
+    #schedule tr.break td { font-size: 3.2vw; padding: 1.2vw 1vw; }
+    #schedule tr.after td { height: auto; padding: 4vw 1vw; }
+    #offday { min-height: 60vw; }
+    #offday-word { font-size: 14vw; }
+    #offday-sub { font-size: 4.4vw; }
+    #player-bar button { font-size: 4vw; padding: 1vw 3vw; }
+    #player-title { font-size: 4.6vw; }
+    #open-yt { font-size: 3.4vw; }
   }
   @media (prefers-reduced-motion: no-preference) {
     .task .dot { transition: background 0.15s; }
