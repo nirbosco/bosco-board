@@ -703,24 +703,25 @@
       var i = index();
       dots.forEach(function (d, j) { d.classList.toggle("on", j === i); });
     }
-    function goTo(i, smooth) {
-      // "|| 0" turns -0 into 0: Chrome refuses smooth-scrolling to negative zero
-      slider.scrollTo({ left: (-i * width()) || 0, behavior: smooth ? "smooth" : "auto" });
+    function goTo(i) {
+      // instant, not smooth: Chromium cancels programmatic smooth scrolls on mandatory-snap
+      // containers; "|| 0" turns -0 into 0, which Chrome refuses to scroll to
+      slider.scrollTo({ left: (-i * width()) || 0, behavior: "auto" });
     }
-    goTo(1, false); // start on today
+    goTo(1); // start on today
     if (index() !== 1) document.getElementById("slide-today").scrollIntoView({ block: "nearest", inline: "start" });
     paint();
     slider.addEventListener("scroll", function () { requestAnimationFrame(paint); }, { passive: true });
     document.addEventListener("click", function (ev) {
       var t = ev.target.closest ? ev.target.closest("#nav-right, #nav-left, .sdot") : null;
       if (!t) return;
-      if (t.id === "nav-right") goTo(Math.max(0, index() - 1), true);
-      else if (t.id === "nav-left") goTo(Math.min(2, index() + 1), true);
-      else goTo(Number(t.getAttribute("data-i")) || 0, true);
+      if (t.id === "nav-right") goTo(Math.max(0, index() - 1));
+      else if (t.id === "nav-left") goTo(Math.min(2, index() + 1));
+      else goTo(Number(t.getAttribute("data-i")) || 0);
     });
     var lastW = width();
     window.addEventListener("resize", function () {
-      if (width() !== lastW) { var i = index(); lastW = width(); goTo(Math.min(2, i), false); }
+      if (width() !== lastW) { var i = index(); lastW = width(); goTo(Math.min(2, i)); }
     });
   }
 
