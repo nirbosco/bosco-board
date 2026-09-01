@@ -34,13 +34,13 @@
     min-width: 0;
   }
   #date-line {
-    font-size: 2.6vmin;
+    font-size: 3.4vmin;
     font-weight: 400;
     letter-spacing: 0.02em;
     color: var(--ink);
   }
   #clock {
-    font-size: 10.5vmin;
+    font-size: 12vmin;
     line-height: 1.18;
     font-weight: 900;
     margin-top: 1.2vmin;
@@ -69,7 +69,7 @@
     max-height: 58%;
   }
   #tasks-title {
-    font-size: 3.4vmin;
+    font-size: 4vmin;
     font-weight: 700;
     margin-bottom: 1.6vmin;
   }
@@ -82,13 +82,13 @@
     display: flex;
     align-items: baseline;
     gap: 1.6vmin;
-    padding: 0.9vmin 0;
-    font-size: 2.8vmin;
+    padding: 1vmin 0;
+    font-size: 3.5vmin;
     font-weight: 500;
   }
   .task .dot {
     flex: none;
-    width: 2.4vmin; height: 2.4vmin;
+    width: 3vmin; height: 3vmin;
     border: 1.5px solid var(--ink);
     border-radius: 50%;
     background: transparent;
@@ -120,7 +120,7 @@
   }
   #add-row select, #add-row input, #add-row button {
     font-family: inherit;
-    font-size: 2.5vmin;
+    font-size: 3.1vmin;
     color: var(--ink);
     background: var(--paper);
     border: 0;
@@ -139,7 +139,7 @@
   #add-row button {
     border: 1.5px solid var(--ink);
     border-radius: 50%;
-    width: 4vmin; height: 4vmin;
+    width: 4.6vmin; height: 4.6vmin;
     line-height: 1;
     font-size: 3vmin;
     font-weight: 500;
@@ -160,7 +160,7 @@
     padding-right: 0.6vmin; /* optical centering of the triangle */
   }
   #play-song:active { background: var(--ink); color: var(--paper); }
-  #song-label { font-size: 3vmin; font-weight: 700; }
+  #song-label { font-size: 3.5vmin; font-weight: 700; }
   #manage-songs {
     border: 0; background: none;
     color: var(--faint);
@@ -174,7 +174,7 @@
   #song-list { list-style: none; max-height: 18vmin; overflow-y: auto; }
   #song-list li {
     display: flex; align-items: center; gap: 1.2vmin;
-    font-size: 2.3vmin; padding: 0.4vmin 0; color: var(--ink);
+    font-size: 2.8vmin; padding: 0.4vmin 0; color: var(--ink);
   }
   #song-list .del-song {
     border: 0; background: none; color: var(--faint);
@@ -196,7 +196,7 @@
   }
   #add-song input:focus { outline: none; border-bottom-color: var(--ink); }
   #note {
-    font-size: 1.9vmin;
+    font-size: 2.3vmin;
     color: var(--faint);
     margin-top: 1vmin;
     min-height: 2.4vmin;
@@ -268,7 +268,7 @@
     flex-direction: column;
   }
   .weekly-title {
-    font-size: 2.9vmin;
+    font-size: 3.5vmin;
     font-weight: 700;
     text-align: center;
     margin-bottom: 1.2vmin;
@@ -283,17 +283,17 @@
     border: 1px solid var(--hairline);
     text-align: center;
     vertical-align: middle;
-    font-size: 1.8vmin;
+    font-size: 2.3vmin;
     font-weight: 500;
-    padding: 0.5vmin 0.2vmin;
+    padding: 0.6vmin 0.2vmin;
     overflow: hidden;
   }
-  .weekly th { font-size: 2vmin; font-weight: 700; }
+  .weekly th { font-size: 2.5vmin; font-weight: 700; }
   .weekly .hr { width: 8%; color: var(--faint); font-variant-numeric: tabular-nums; font-weight: 400; }
   .weekly .today-col { background: var(--shade); }
   .weekly .act-time {
     display: block;
-    font-size: 1.5vmin;
+    font-size: 1.9vmin;
     color: var(--faint);
     font-variant-numeric: tabular-nums;
     direction: ltr;
@@ -305,7 +305,7 @@
     justify-content: center;
     border: 1px solid var(--hairline);
     color: var(--faint);
-    font-size: 2.8vmin;
+    font-size: 3.3vmin;
     text-align: center;
     padding: 2vmin;
   }
@@ -344,13 +344,13 @@
     border: 1px solid var(--hairline);
     text-align: center;
     vertical-align: middle;
-    padding: 0.6vmin 0.5vmin;
-    font-size: 2.4vmin;
+    padding: 0.7vmin 0.5vmin;
+    font-size: 3vmin;
     font-weight: 500;
     overflow: hidden;
   }
   #schedule th {
-    font-size: 2.9vmin;
+    font-size: 3.5vmin;
     font-weight: 700;
     padding: 1vmin 0.5vmin;
   }
@@ -361,17 +361,24 @@
   #schedule .hourcol .hname { display: block; font-weight: 500; }
   #schedule .hourcol .htime {
     display: block;
-    font-size: 1.9vmin;
+    font-size: 2.3vmin;
     color: var(--faint);
     font-variant-numeric: tabular-nums;
     direction: ltr;
   }
-  #schedule tr.break td { background: var(--shade); font-size: 2vmin; padding: 0.4vmin; }
+  #schedule tr.break td { background: var(--shade); font-size: 2.5vmin; padding: 0.4vmin; }
   #schedule tr.after td { height: 16%; font-weight: 400; color: var(--faint); }
+  #schedule td.special-cell {
+    font-size: 2.9vmin;
+    font-weight: 500;
+    line-height: 2;
+    padding: 1.5vmin;
+    vertical-align: middle;
+  }
   #schedule .act-name { display: block; color: var(--ink); font-weight: 500; }
   #schedule .act-time {
     display: block;
-    font-size: 1.9vmin;
+    font-size: 2.3vmin;
     color: var(--faint);
     font-variant-numeric: tabular-nums;
     direction: ltr;
@@ -387,7 +394,7 @@
     border: 1px solid var(--hairline);
   }
   #offday-word { font-size: 11vmin; font-weight: 900; }
-  #offday-sub { font-size: 3vmin; font-weight: 400; color: var(--faint); }
+  #offday-sub { font-size: 3.6vmin; font-weight: 400; color: var(--faint); }
   /* portrait / phone: stacked, scrollable, sized by width */
   @media (orientation: portrait) {
     html, body { height: auto; }
@@ -601,7 +608,22 @@
     ["פל\"א", "מתמטיקה", "שפה", "אנגלית", "מולדת", "מדעים"],
     ["מרחב גמיש", "מרחב גמיש", "שבילי מורשת", "כישורי חיים", "", ""]
   ];
-  var ORI = null; // grade 2 schedule pending
+  // Ori (grade 2), from Webtop screenshots 1.9.2026; hours 6-7 (שהייה וכד') intentionally omitted
+  var ORI = [
+    ["שפה", "שפה", "חשבון", "חשבון", "מפתח הלב/פל\"א", ""],
+    ["שפה", "מוסיקה", "חשבון", "חשבון", "מולדת", ""],
+    ["בחירה", "", "יום יער", "יום יער", "תורה", ""],
+    ["חשבון", "חשבון", "פרטני", "שפה", "שפה", ""],
+    ["", "מוסיקה", "מחשבים", "שבילי מורשת", "אומנות", ""],
+    ["שפה", "שפה", "מדעים", "כישורי חיים", "", ""]
+  ];
+
+  // one-off day overrides: date -> { guli/ori: multi-line note instead of the day's column }
+  var SPECIAL = {
+    "2026-09-02": {
+      ori: "עוֹד אֵין מַעֲרֶכֶת הַיּוֹם.\nרֹב הַיּוֹם: חֲזָרוֹת לְטֶקֶס קַבָּלַת כִּתּוֹת א׳.\nלְהָבִיא רַק קַלְמָר וְתִיקִיָּה אֲדוּמָה."
+    }
+  };
 
   // afternoon activities (חוגים), by weekday 0=Sunday .. 5=Friday
   var AFTERNOON = {
@@ -665,21 +687,30 @@
     var day = d.getDay();
     var guli = GULI[day] || ["", "", "", "", "", ""];
     var ori = ORI ? (ORI[day] || ["", "", "", "", "", ""]) : null;
+    var special = SPECIAL[iso(d)] || {};
+    var oriNote = special.ori, oriNoteEmitted = false;
+    // the ori column spans all 8 rows above the afternoon row when a note replaces the day
+    function oriCell(content, cls) {
+      if (!oriNote) return "<td" + (cls || "") + ">" + content + "</td>";
+      if (oriNoteEmitted) return "";
+      oriNoteEmitted = true;
+      return "<td rowspan='8' class='special-cell'>" + esc(oriNote).replace(/\n/g, "<br>") + "</td>";
+    }
     var html = "";
     HOURS_ROWS.forEach(function (row) {
       if (row.kind === "lesson") {
         var g = guli[row.idx], o = ori ? ori[row.idx] : "";
         html += "<tr><td" + (g ? "" : " class='empty'") + ">" + esc(g) + "</td>" +
           "<td class='hourcol'><span class='hname'>" + row.name + "</span><span class='htime'>" + row.time + "</span></td>" +
-          "<td" + (o ? "" : " class='empty'") + ">" + esc(o) + "</td></tr>";
+          oriCell(esc(o), o ? "" : " class='empty'") + "</tr>";
       } else if (row.kind === "break1") {
         html += "<tr class='break'><td>חָצֵר, אַחַר כָּךְ אֹכֶל</td>" +
           "<td class='hourcol'><span class='hname'>" + row.name + "</span><span class='htime'>" + row.time + "</span></td>" +
-          "<td>אֹכֶל, אַחַר כָּךְ חָצֵר</td></tr>";
+          oriCell("אֹכֶל, אַחַר כָּךְ חָצֵר") + "</tr>";
       } else if (row.kind === "break2") {
         html += "<tr class='break'><td></td>" +
           "<td class='hourcol'><span class='hname'>" + row.name + "</span><span class='htime'>" + row.time + "</span></td>" +
-          "<td></td></tr>";
+          oriCell("") + "</tr>";
       } else {
         var ga = AFTERNOON.guli[day], oa = AFTERNOON.ori[day];
         var cellAfter = function (a) {
@@ -837,6 +868,7 @@
       shownDate = ds;
       setPhrase(document.getElementById("date-line"), dateInWords(now));
       renderSchedule(now);
+      renderTasks(); // the built-in ritalin row resets each school day
       buildWeekly("weekly-guli", GULI, AFTERNOON.guli, "");
       buildWeekly("weekly-ori", ORI, AFTERNOON.ori, "הַמַּעֲרֶכֶת שֶׁל אוֹרִי תַּעֲלֶה לַלּוּחַ בְּקָרוֹב");
     }
@@ -917,9 +949,18 @@
     }, 15000);
   }
 
+  function ritalinRow() {
+    var now = new Date();
+    if (schoolStatus(now)) return ""; // only on school days
+    var done = state.builtin && state.builtin.date === iso(now) && state.builtin.ritalinDone;
+    return "<li class='task" + (done ? " done" : "") + "' data-builtin='ritalin'>" +
+      "<button class='dot' aria-label='סימון ביצוע'></button>" +
+      "<span class='txt'>גולי - לקחת רטלין</span></li>";
+  }
+
   function renderTasks() {
     var ul = document.getElementById("task-list");
-    ul.innerHTML = state.tasks.map(function (t) {
+    ul.innerHTML = ritalinRow() + state.tasks.map(function (t) {
       return "<li class='task" + (t.done ? " done" : "") + "' data-id='" + t.id + "'>" +
         "<button class='dot' aria-label='סימון ביצוע'></button>" +
         "<span class='txt'>" + esc(t.who) + " - " + esc(t.text) + "</span>" +
@@ -958,6 +999,14 @@
   document.getElementById("task-list").addEventListener("click", function (ev) {
     var li = ev.target.closest(".task");
     if (!li) return;
+    if (li.getAttribute("data-builtin") === "ritalin") {
+      if (!ev.target.classList.contains("dot")) return;
+      var today = iso(new Date());
+      var cur = state.builtin && state.builtin.date === today && state.builtin.ritalinDone;
+      state.builtin = { date: today, ritalinDone: !cur };
+      renderTasks(); schedulePublish();
+      return;
+    }
     var id = Number(li.getAttribute("data-id"));
     var t = state.tasks.find(function (x) { return x.id === id; });
     if (!t) return;
