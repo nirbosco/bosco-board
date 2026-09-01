@@ -245,11 +245,88 @@
   /* ---- left pane: schedule ---- */
   #schedule-pane {
     flex: 14;
-    padding: 3.5vmin 3vmin;
+    padding: 3.5vmin 3vmin 1.5vmin;
     display: flex;
     flex-direction: column;
     min-width: 0;
   }
+  /* weekly slider */
+  #slider {
+    flex: 1;
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    min-height: 0;
+  }
+  #slider::-webkit-scrollbar { display: none; }
+  .slide {
+    flex: 0 0 100%;
+    min-width: 0;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+  }
+  .weekly-title {
+    font-size: 2.9vmin;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1.2vmin;
+  }
+  .weekly-wrap { flex: 1; min-height: 0; display: flex; }
+  table.weekly {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .weekly th, .weekly td {
+    border: 1px solid var(--hairline);
+    text-align: center;
+    vertical-align: middle;
+    font-size: 1.8vmin;
+    font-weight: 500;
+    padding: 0.5vmin 0.2vmin;
+    overflow: hidden;
+  }
+  .weekly th { font-size: 2vmin; font-weight: 700; }
+  .weekly .hr { width: 8%; color: var(--faint); font-variant-numeric: tabular-nums; font-weight: 400; }
+  .weekly .today-col { background: var(--shade); }
+  .weekly-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--hairline);
+    color: var(--faint);
+    font-size: 2.8vmin;
+    text-align: center;
+    padding: 2vmin;
+  }
+  #slider-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.4vmin;
+    padding-top: 1vmin;
+  }
+  #slider-nav button {
+    border: 0;
+    background: none;
+    color: var(--faint);
+    font-family: inherit;
+    font-size: 3.6vmin;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 1vmin;
+  }
+  #slider-nav button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  #slider-dots { display: flex; gap: 1.4vmin; }
+  .sdot {
+    width: 1.3vmin; height: 1.3vmin;
+    border: 1px solid var(--faint);
+    border-radius: 50%;
+  }
+  .sdot.on { background: var(--ink); border-color: var(--ink); }
   #schedule {
     flex: 1;
     border-collapse: collapse;
@@ -340,6 +417,14 @@
     #offday { min-height: 60vw; }
     #offday-word { font-size: 14vw; }
     #offday-sub { font-size: 4.4vw; }
+    .weekly-title { font-size: 5vw; margin-bottom: 2vw; }
+    .weekly th, .weekly td { font-size: 2.9vw; padding: 1.2vw 0.4vw; }
+    .weekly th { font-size: 3.2vw; }
+    .weekly .hr { font-size: 2.4vw; }
+    .weekly-empty { min-height: 50vw; font-size: 4.4vw; }
+    #slider-nav { gap: 5vw; padding-top: 2.5vw; }
+    #slider-nav button { font-size: 7vw; }
+    .sdot { width: 2.4vw; height: 2.4vw; }
     #player-bar button { font-size: 4vw; padding: 1vw 3vw; }
     #player-title { font-size: 4.6vw; }
     #open-yt { font-size: 3.4vw; }
@@ -387,13 +472,30 @@
     </section>
   </main>
   <aside id="schedule-pane">
-    <table id="schedule" aria-label="מערכת השעות של היום">
-      <thead>
-        <tr><th style="width:38%">גּוֹלִי</th><th class="hourcol">שָׁעָה</th><th style="width:38%">אוֹרִי</th></tr>
-      </thead>
-      <tbody id="schedule-body"></tbody>
-    </table>
-    <div id="offday"><div id="offday-word">—</div><div id="offday-sub"></div></div>
+    <div id="slider">
+      <section class="slide" id="slide-guli">
+        <div class="weekly-title">הַשָּׁבוּעַ שֶׁל גּוֹלִי</div>
+        <div class="weekly-wrap" id="weekly-guli"></div>
+      </section>
+      <section class="slide" id="slide-today">
+        <table id="schedule" aria-label="מערכת השעות של היום">
+          <thead>
+            <tr><th style="width:38%">גּוֹלִי</th><th class="hourcol">שָׁעָה</th><th style="width:38%">אוֹרִי</th></tr>
+          </thead>
+          <tbody id="schedule-body"></tbody>
+        </table>
+        <div id="offday"><div id="offday-word">—</div><div id="offday-sub"></div></div>
+      </section>
+      <section class="slide" id="slide-ori">
+        <div class="weekly-title">הַשָּׁבוּעַ שֶׁל אוֹרִי</div>
+        <div class="weekly-wrap" id="weekly-ori"></div>
+      </section>
+    </div>
+    <div id="slider-nav">
+      <button id="nav-right" aria-label="הַשָּׁבוּעַ שֶׁל גּוֹלִי">›</button>
+      <div id="slider-dots"><span class="sdot" data-i="0"></span><span class="sdot on" data-i="1"></span><span class="sdot" data-i="2"></span></div>
+      <button id="nav-left" aria-label="הַשָּׁבוּעַ שֶׁל אוֹרִי">‹</button>
+    </div>
   </aside>
 </div>
 
@@ -564,6 +666,63 @@
     document.getElementById("schedule-body").innerHTML = html;
   }
 
+  /* ---------- weekly slider ---------- */
+  var WEEK_DAYS = ["רִאשׁוֹן", "שֵׁנִי", "שְׁלִישִׁי", "רְבִיעִי", "חֲמִישִׁי", "שִׁישִׁי"];
+  var HOUR_TIMES = ["8:00", "8:45", "10:20", "11:05", "12:05", "12:45"];
+
+  function buildWeekly(elId, data, emptyText) {
+    var host = document.getElementById(elId);
+    if (!data) {
+      host.innerHTML = "<div class='weekly-empty'>" + emptyText + "</div>";
+      return;
+    }
+    var today = new Date().getDay();
+    var html = "<table class='weekly'><thead><tr><th class='hr'></th>";
+    WEEK_DAYS.forEach(function (d, i) {
+      html += "<th" + (i === today ? " class='today-col'" : "") + ">" + d + "</th>";
+    });
+    html += "</tr></thead><tbody>";
+    for (var h = 0; h < 6; h++) {
+      html += "<tr><td class='hr'>" + HOUR_TIMES[h] + "</td>";
+      for (var d2 = 0; d2 < 6; d2++) {
+        var subj = (data[d2] || [])[h] || "";
+        html += "<td" + (d2 === today ? " class='today-col'" : "") + ">" + esc(subj) + "</td>";
+      }
+      html += "</tr>";
+    }
+    html += "</tbody></table>";
+    host.innerHTML = html;
+  }
+
+  function initSlider() {
+    var slider = document.getElementById("slider");
+    var dots = document.querySelectorAll(".sdot");
+    function width() { return slider.clientWidth || 1; }
+    function index() { return Math.min(2, Math.round(Math.abs(slider.scrollLeft) / width())); }
+    function paint() {
+      var i = index();
+      dots.forEach(function (d, j) { d.classList.toggle("on", j === i); });
+    }
+    function goTo(i, smooth) {
+      slider.scrollTo({ left: -i * width(), behavior: smooth ? "smooth" : "auto" });
+    }
+    goTo(1, false); // start on today
+    if (index() !== 1) document.getElementById("slide-today").scrollIntoView({ block: "nearest", inline: "start" });
+    paint();
+    slider.addEventListener("scroll", function () { requestAnimationFrame(paint); }, { passive: true });
+    document.addEventListener("click", function (ev) {
+      var t = ev.target.closest ? ev.target.closest("#nav-right, #nav-left, .sdot") : null;
+      if (!t) return;
+      if (t.id === "nav-right") goTo(Math.max(0, index() - 1), true);
+      else if (t.id === "nav-left") goTo(Math.min(2, index() + 1), true);
+      else goTo(Number(t.getAttribute("data-i")) || 0, true);
+    });
+    var lastW = width();
+    window.addEventListener("resize", function () {
+      if (width() !== lastW) { var i = index(); lastW = width(); goTo(Math.min(2, i), false); }
+    });
+  }
+
   /* ---------- clock: minute-exact ticking with letter transitions ---------- */
   var REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -642,6 +801,8 @@
       shownDate = ds;
       setPhrase(document.getElementById("date-line"), dateInWords(now));
       renderSchedule(now);
+      buildWeekly("weekly-guli", GULI, "");
+      buildWeekly("weekly-ori", ORI, "הַמַּעֲרֶכֶת שֶׁל אוֹרִי תַּעֲלֶה לַלּוּחַ בְּקָרוֹב");
     }
   }
 
@@ -651,9 +812,13 @@
     setTimeout(function () { tick(); scheduleTick(); }, delay);
   }
 
-  /* ---------- state: artifact self-publish on claude.ai, localStorage elsewhere ---------- */
+  /* ---------- state: artifact self-publish on claude.ai, Supabase on the public site ---------- */
   var IS_ARTIFACT = !!(window.claude && window.claude.use);
   var LS_KEY = "bosco-board-state";
+  var SB_URL = "https://ndrhiikczkbosentclnh.supabase.co";
+  var SB_KEY = "__SB_KEY__"; // anon/public key, injected at deploy
+  var SB_ON = !IS_ARTIFACT && SB_KEY.indexOf("__") !== 0;
+  var BOARD_ID = "bosco-home";
   var state = JSON.parse(document.getElementById("state").textContent);
   if (!IS_ARTIFACT) {
     try {
@@ -663,6 +828,58 @@
   }
   var artifactNS = null;
   var canWrite = true;
+
+  function normalizeState(s) {
+    s = s && typeof s === "object" ? s : {};
+    s.tasks = s.tasks || [];
+    s.songs = s.songs || [];
+    s.rev = s.rev || 1;
+    return s;
+  }
+  state = normalizeState(state);
+
+  function sbHeaders(extra) {
+    var h = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" };
+    if (extra) for (var k in extra) h[k] = extra[k];
+    return h;
+  }
+  function cloudPull() {
+    return fetch(SB_URL + "/rest/v1/bosco_board?id=eq." + BOARD_ID + "&select=state", { headers: sbHeaders() })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("pull " + r.status)); })
+      .then(function (rows) { return rows[0] ? normalizeState(rows[0].state) : null; });
+  }
+  function cloudPush() {
+    return fetch(SB_URL + "/rest/v1/bosco_board?id=eq." + BOARD_ID, {
+      method: "PATCH",
+      headers: sbHeaders({ Prefer: "return=minimal" }),
+      body: JSON.stringify({ state: state, updated_at: new Date().toISOString() })
+    }).then(function (r) { if (!r.ok) throw new Error("push " + r.status); note(""); })
+      .catch(function () { note("אין חיבור לענן כרגע. השינוי שמור במכשיר הזה ויעלה כשהחיבור יחזור."); });
+  }
+  function saveLocal() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* private mode etc. */ }
+  }
+  function adoptRemote(remote) {
+    state = remote;
+    saveLocal();
+    renderTasks();
+    renderSongs();
+  }
+  function cloudInit() {
+    cloudPull().then(function (remote) {
+      if (!remote) { state.rev++; cloudPush(); return; }
+      var localHas = state.tasks.length || state.songs.length;
+      var remoteHas = remote.tasks.length || remote.songs.length;
+      if (!remoteHas && localHas) { state.rev = remote.rev + 1; cloudPush(); } // first device migrates its data up
+      else if (JSON.stringify(remote) !== JSON.stringify(state)) adoptRemote(remote);
+    }).catch(function () { /* offline: stay local */ });
+    setInterval(function () {
+      if (publishTimer) return; // a local edit is about to be pushed
+      cloudPull().then(function (remote) {
+        if (remote && remote.rev !== state.rev) adoptRemote(remote);
+      }).catch(function () { /* offline */ });
+    }, 15000);
+  }
 
   function renderTasks() {
     var ul = document.getElementById("task-list");
@@ -684,7 +901,9 @@
   function doPublish() {
     publishTimer = null;
     if (!IS_ARTIFACT) {
-      try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* private mode etc. */ }
+      state.rev = (state.rev || 0) + 1;
+      saveLocal();
+      if (SB_ON) cloudPush();
       return;
     }
     if (!PRISTINE) return;
@@ -810,6 +1029,7 @@
     renderTasks();
     renderSongs();
     tick();
+    initSlider();
     scheduleTick();
     document.addEventListener("visibilitychange", function () {
       if (!document.hidden) tick(); // resync instantly when the screen wakes
@@ -817,6 +1037,7 @@
     if (window.claude && window.claude.use) {
       window.claude.use("artifact").then(function (ns) { artifactNS = ns; });
     }
+    if (SB_ON) cloudInit();
   });
 })();
 </script>
