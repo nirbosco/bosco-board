@@ -818,7 +818,7 @@
   var IS_ARTIFACT = !!(window.claude && window.claude.use);
   var LS_KEY = "bosco-board-state";
   var SB_URL = "https://ndrhiikczkbosentclnh.supabase.co";
-  var SB_KEY = "__SB_KEY__"; // anon/public key, injected at deploy
+  var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kcmhpaWtjemtib3NlbnRjbG5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzYwMzcsImV4cCI6MjA5NTkxMjAzN30.KpSEtEHI-i2TQDfuCf8l4Dg1wQ-Ya-UdLEQ6VN3KxEQ"; // anon/public key, injected at deploy
   var SB_ON = !IS_ARTIFACT && SB_KEY.indexOf("__") !== 0;
   var BOARD_ID = "bosco-home";
   var state = JSON.parse(document.getElementById("state").textContent);
