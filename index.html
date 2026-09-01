@@ -291,6 +291,13 @@
   .weekly th { font-size: 2vmin; font-weight: 700; }
   .weekly .hr { width: 8%; color: var(--faint); font-variant-numeric: tabular-nums; font-weight: 400; }
   .weekly .today-col { background: var(--shade); }
+  .weekly .act-time {
+    display: block;
+    font-size: 1.5vmin;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+    direction: ltr;
+  }
   .weekly-empty {
     flex: 1;
     display: flex;
@@ -361,6 +368,14 @@
   }
   #schedule tr.break td { background: var(--shade); font-size: 2vmin; padding: 0.4vmin; }
   #schedule tr.after td { height: 16%; font-weight: 400; color: var(--faint); }
+  #schedule .act-name { display: block; color: var(--ink); font-weight: 500; }
+  #schedule .act-time {
+    display: block;
+    font-size: 1.9vmin;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+    direction: ltr;
+  }
   #schedule td.empty { color: var(--faint); }
   #offday {
     flex: 1;
@@ -588,6 +603,12 @@
   ];
   var ORI = null; // grade 2 schedule pending
 
+  // afternoon activities (חוגים), by weekday 0=Sunday .. 5=Friday
+  var AFTERNOON = {
+    guli: [null, null, null, { time: "14:45–16:00", title: "מבוכים ודרקונים" }, null, null],
+    ori: [null, null, null, null, null, null]
+  };
+
   function iso(d) {
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   }
@@ -660,7 +681,11 @@
           "<td class='hourcol'><span class='hname'>" + row.name + "</span><span class='htime'>" + row.time + "</span></td>" +
           "<td></td></tr>";
       } else {
-        html += "<tr class='after'><td></td><td class='hourcol'>" + row.name + "</td><td></td></tr>";
+        var ga = AFTERNOON.guli[day], oa = AFTERNOON.ori[day];
+        var cellAfter = function (a) {
+          return a ? "<span class='act-name'>" + esc(a.title) + "</span><span class='act-time'>" + a.time + "</span>" : "";
+        };
+        html += "<tr class='after'><td>" + cellAfter(ga) + "</td><td class='hourcol'>" + row.name + "</td><td>" + cellAfter(oa) + "</td></tr>";
       }
     });
     document.getElementById("schedule-body").innerHTML = html;
@@ -670,7 +695,7 @@
   var WEEK_DAYS = ["רִאשׁוֹן", "שֵׁנִי", "שְׁלִישִׁי", "רְבִיעִי", "חֲמִישִׁי", "שִׁישִׁי"];
   var HOUR_TIMES = ["8:00", "8:45", "10:20", "11:05", "12:05", "12:45"];
 
-  function buildWeekly(elId, data, emptyText) {
+  function buildWeekly(elId, data, afternoon, emptyText) {
     var host = document.getElementById(elId);
     if (!data) {
       host.innerHTML = "<div class='weekly-empty'>" + emptyText + "</div>";
@@ -687,6 +712,15 @@
       for (var d2 = 0; d2 < 6; d2++) {
         var subj = (data[d2] || [])[h] || "";
         html += "<td" + (d2 === today ? " class='today-col'" : "") + ">" + esc(subj) + "</td>";
+      }
+      html += "</tr>";
+    }
+    if (afternoon && afternoon.some(function (a) { return a; })) {
+      html += "<tr class='wk-after'><td class='hr'>אחה״צ</td>";
+      for (var d3 = 0; d3 < 6; d3++) {
+        var act = afternoon[d3];
+        html += "<td" + (d3 === today ? " class='today-col'" : "") + ">" +
+          (act ? esc(act.title) + "<span class='act-time'>" + act.time + "</span>" : "") + "</td>";
       }
       html += "</tr>";
     }
@@ -803,8 +837,8 @@
       shownDate = ds;
       setPhrase(document.getElementById("date-line"), dateInWords(now));
       renderSchedule(now);
-      buildWeekly("weekly-guli", GULI, "");
-      buildWeekly("weekly-ori", ORI, "הַמַּעֲרֶכֶת שֶׁל אוֹרִי תַּעֲלֶה לַלּוּחַ בְּקָרוֹב");
+      buildWeekly("weekly-guli", GULI, AFTERNOON.guli, "");
+      buildWeekly("weekly-ori", ORI, AFTERNOON.ori, "הַמַּעֲרֶכֶת שֶׁל אוֹרִי תַּעֲלֶה לַלּוּחַ בְּקָרוֹב");
     }
   }
 
