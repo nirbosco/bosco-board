@@ -209,13 +209,25 @@
     overflow: hidden;
     pointer-events: none;
   }
-  #now-playing {
-    font-size: 2.7vmin;
-    font-weight: 500;
-    color: var(--ink);
+  #now-playing-row {
+    display: flex;
+    align-items: center;
+    gap: 2vmin;
     margin-top: 1.2vmin;
-    min-height: 3vmin;
+    min-height: 4.5vmin;
   }
+  #now-playing { font-size: 2.7vmin; font-weight: 500; color: var(--ink); }
+  #pause-song {
+    font-family: inherit;
+    font-size: 2.5vmin;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    padding: 0.4vmin 2vmin;
+    cursor: pointer;
+  }
+  #pause-song:active { background: var(--ink); color: var(--paper); }
+  #pause-song:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   /* ---- left pane: schedule ---- */
   #schedule-pane {
     flex: 14;
@@ -421,7 +433,9 @@
     #slider-nav { gap: 5vw; padding-top: 2.5vw; }
     #slider-nav button { font-size: 7vw; }
     .sdot { width: 2.4vw; height: 2.4vw; }
-    #now-playing { font-size: 4.2vw; min-height: 5vw; }
+    #now-playing-row { min-height: 7vw; gap: 3vw; }
+    #now-playing { font-size: 4.2vw; }
+    #pause-song { font-size: 4vw; padding: 1vw 3.5vw; }
   }
   @media (prefers-reduced-motion: no-preference) {
     .task .dot { transition: background 0.15s; }
@@ -438,7 +452,10 @@
         <span id="song-label">שִׁיר הַיּוֹם</span>
         <button id="manage-songs" aria-label="ניהול רשימת השירים">+</button>
       </div>
-      <div id="now-playing"></div>
+      <div id="now-playing-row">
+        <span id="now-playing"></span>
+        <button id="pause-song" type="button" hidden>הַפְסָקָה</button>
+      </div>
       <div id="song-manager" hidden>
         <ul id="song-list"></ul>
         <form id="add-song">
@@ -1012,12 +1029,60 @@
 
   /* ---------- hidden background player: one drawn song per day ---------- */
   var ytPlayer = null, ytReady = false, isPlaying = false, ytApiRequested = false, pendingSong = null;
+  var SHEET_CSV_URL = "__SHEET_URL__"; // published-to-web CSV of the family song sheet
+  var SHEET_ON = SHEET_CSV_URL.indexOf("http") === 0;
+  var sheetSongs = null;
+
+  function songsList() { return SHEET_ON ? (sheetSongs || []) : state.songs; }
+
+  function parseCsvSongs(text) {
+    var out = [];
+    text.split(/\r?\n/).forEach(function (line) {
+      if (!line.trim()) return;
+      var parts = line.split(",").map(function (c) { return c.replace(/^"+|"+$/g, "").trim(); });
+      var link = null;
+      for (var i = 0; i < parts.length; i++) if (/youtu/.test(parts[i])) { link = parts[i]; break; }
+      if (!link) return;
+      var vid = ytId(link);
+      if (!vid) return;
+      var title = "";
+      for (var j = 0; j < parts.length; j++) if (parts[j] && !/youtu/.test(parts[j])) { title = parts[j]; break; }
+      out.push({ id: out.length + 1, videoId: vid, title: title || ("שיר " + (out.length + 1)) });
+    });
+    return out;
+  }
+
+  function refreshSheet() {
+    if (!SHEET_ON) return;
+    fetch(SHEET_CSV_URL, { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.text() : Promise.reject(new Error(r.status)); })
+      .then(function (t) {
+        var songs = parseCsvSongs(t);
+        if (songs.length) {
+          sheetSongs = songs;
+          try { localStorage.setItem("bosco-sheet-songs", JSON.stringify(songs)); } catch (e) { }
+        }
+      })
+      .catch(function () {
+        if (!sheetSongs) {
+          try { sheetSongs = JSON.parse(localStorage.getItem("bosco-sheet-songs") || "null"); } catch (e) { }
+        }
+      });
+  }
+
+  function setPauseButton(mode) { // "playing" | "paused" | null
+    var b = document.getElementById("pause-song");
+    if (!mode) { b.hidden = true; return; }
+    b.hidden = false;
+    b.textContent = mode === "paused" ? "הַמְשֵׁךְ" : "הַפְסָקָה";
+  }
 
   function nowPlaying(text) { document.getElementById("now-playing").textContent = text || ""; }
 
   function stopPlayback() {
     isPlaying = false;
     nowPlaying("");
+    setPauseButton(null);
     if (ytPlayer && ytReady) { try { ytPlayer.stopVideo(); } catch (e) { /* not ready */ } }
   }
 
@@ -1025,6 +1090,7 @@
     pendingSong = song;
     isPlaying = true;
     nowPlaying("מְנַגֵּן עַכְשָׁו: " + song.title);
+    setPauseButton("playing");
     if (ytPlayer && ytReady) { ytPlayer.loadVideoById(song.videoId); return; }
     if (ytApiRequested) return;
     ytApiRequested = true;
@@ -1035,7 +1101,12 @@
         playerVars: { autoplay: 1, controls: 0, disablekb: 1, rel: 0 },
         events: {
           onReady: function (e) { ytReady = true; if (isPlaying) e.target.playVideo(); },
-          onStateChange: function (e) { if (window.YT && e.data === YT.PlayerState.ENDED) stopPlayback(); },
+          onStateChange: function (e) {
+            if (!window.YT) return;
+            if (e.data === YT.PlayerState.ENDED) stopPlayback();
+            else if (e.data === YT.PlayerState.PAUSED && isPlaying) setPauseButton("paused");
+            else if (e.data === YT.PlayerState.PLAYING) setPauseButton("playing");
+          },
           onError: function () { stopPlayback(); note("אי אפשר לנגן את השיר הזה מתוך הלוח."); }
         }
       });
@@ -1048,23 +1119,36 @@
 
   function playDaily() {
     if (isPlaying) return; // no skipping, no restarting mid-song
-    if (!state.songs.length) {
-      document.getElementById("song-manager").hidden = false;
-      note("עוד אין שירים ברשימה. הוסיפו קישור יוטיוב ולחצו שוב על פליי.");
-      return;
-    }
     var today = iso(new Date());
     var pick = null;
-    if (state.daily && state.daily.date === today) {
-      pick = state.songs.find(function (x) { return x.id === state.daily.songId; }) || null;
+    if (state.daily && state.daily.date === today && state.daily.videoId) {
+      pick = { videoId: state.daily.videoId, title: state.daily.title || "שיר היום" };
     }
     if (!pick) { // first press today draws the song for the whole family
-      pick = state.songs[Math.floor(Math.random() * state.songs.length)];
-      state.daily = { date: today, songId: pick.id };
+      var list = songsList();
+      if (!list.length) {
+        if (SHEET_ON) { note("רשימת השירים בגוגל שיטס ריקה או לא זמינה."); }
+        else {
+          document.getElementById("song-manager").hidden = false;
+          note("עוד אין שירים ברשימה. הוסיפו קישור יוטיוב ולחצו שוב על פליי.");
+        }
+        return;
+      }
+      var s0 = list[Math.floor(Math.random() * list.length)];
+      pick = { videoId: s0.videoId, title: s0.title };
+      state.daily = { date: today, videoId: pick.videoId, title: pick.title };
       schedulePublish();
     }
     startBackgroundPlay(pick);
   }
+
+  document.getElementById("pause-song").addEventListener("click", function () {
+    if (!isPlaying || !ytPlayer || !ytReady) return;
+    try {
+      if (ytPlayer.getPlayerState() === YT.PlayerState.PAUSED) ytPlayer.playVideo();
+      else ytPlayer.pauseVideo();
+    } catch (e) { /* player not ready */ }
+  });
 
   // click plays; a 3-second hold is the parents' hidden stop
   (function () {
@@ -1125,6 +1209,12 @@
       window.claude.use("artifact").then(function (ns) { artifactNS = ns; });
     }
     if (SB_ON) cloudInit();
+    if (SHEET_ON) {
+      document.getElementById("manage-songs").style.display = "none";
+      document.getElementById("song-manager").hidden = true;
+      refreshSheet();
+      setInterval(refreshSheet, 600000); // re-read the sheet every 10 minutes
+    }
   });
 })();
 </script>
