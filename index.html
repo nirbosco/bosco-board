@@ -704,7 +704,8 @@
       dots.forEach(function (d, j) { d.classList.toggle("on", j === i); });
     }
     function goTo(i, smooth) {
-      slider.scrollTo({ left: -i * width(), behavior: smooth ? "smooth" : "auto" });
+      // "|| 0" turns -0 into 0: Chrome refuses smooth-scrolling to negative zero
+      slider.scrollTo({ left: (-i * width()) || 0, behavior: smooth ? "smooth" : "auto" });
     }
     goTo(1, false); // start on today
     if (index() !== 1) document.getElementById("slide-today").scrollIntoView({ block: "nearest", inline: "start" });
