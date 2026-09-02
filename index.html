@@ -1,9 +1,11 @@
 <title>לוּחַ בּוֹסְקוֹ</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;700;900&display=swap">
 <script type="application/json" id="state">{"tasks":[],"songs":[],"rev":1}</script>
 <style>
   :root {
+    color-scheme: light; /* opt out of Android Force Dark: we manage our own dark theme */
     --paper: #fcfcf9;
     --ink: #191914;
     --faint: #8a8a80;
@@ -11,11 +13,12 @@
     --shade: #f1f0e9;
   }
   body.dark {
-    --paper: #191914;
-    --ink: #ece9df;
-    --faint: #8f8d83;
-    --hairline: #45453e;
-    --shade: #23231d;
+    color-scheme: dark;
+    --paper: #161612;
+    --ink: #f4f2ea;
+    --faint: #a5a399;
+    --hairline: #55554c;
+    --shade: #26261f;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
