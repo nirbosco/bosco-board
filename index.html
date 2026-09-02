@@ -749,6 +749,7 @@
   function initSlider() {
     var slider = document.getElementById("slider");
     var dots = document.querySelectorAll(".sdot");
+    var targetIdx = 1;
     function width() { return slider.clientWidth || 1; }
     function index() { return Math.min(2, Math.round(Math.abs(slider.scrollLeft) / width())); }
     function paint() {
@@ -758,12 +759,13 @@
     function goTo(i) {
       // instant, not smooth: Chromium cancels programmatic smooth scrolls on mandatory-snap
       // containers; "|| 0" turns -0 into 0, which Chrome refuses to scroll to
+      targetIdx = i;
       slider.scrollTo({ left: (-i * width()) || 0, behavior: "auto" });
     }
     goTo(1); // start on today
     if (index() !== 1) document.getElementById("slide-today").scrollIntoView({ block: "nearest", inline: "start" });
     paint();
-    slider.addEventListener("scroll", function () { requestAnimationFrame(paint); }, { passive: true });
+    slider.addEventListener("scroll", function () { targetIdx = index(); requestAnimationFrame(paint); }, { passive: true });
     document.addEventListener("click", function (ev) {
       var t = ev.target.closest ? ev.target.closest("#nav-right, #nav-left, .sdot") : null;
       if (!t) return;
@@ -773,7 +775,8 @@
     });
     var lastW = width();
     window.addEventListener("resize", function () {
-      if (width() !== lastW) { var i = index(); lastW = width(); goTo(Math.min(2, i)); }
+      // restore the intended slide, not the measured one: a zero-width load mismeasures
+      if (width() !== lastW) { var keep = targetIdx; lastW = width(); goTo(Math.min(2, keep)); }
     });
   }
 
