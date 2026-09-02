@@ -10,6 +10,13 @@
     --hairline: #b9b9ae;
     --shade: #f1f0e9;
   }
+  body.dark {
+    --paper: #191914;
+    --ink: #ece9df;
+    --faint: #8f8d83;
+    --hairline: #45453e;
+    --shade: #23231d;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
   body {
@@ -840,9 +847,24 @@
   }
 
   var shownDate = "";
+  function isNight(now) {
+    var h = now.getHours(), m = now.getMinutes();
+    return h >= 19 || h < 6 || (h === 6 && m < 30);
+  }
   function tick() {
     var now = new Date();
+    document.body.classList.toggle("dark", isNight(now));
     setPhrase(document.getElementById("clock"), timeInWords(now.getHours(), now.getMinutes()));
+    if (WAKE_VIDEO_ID.indexOf("__") !== 0 && !schoolStatus(now) && lastWakeDate !== iso(now)) {
+      var hm = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+      if (hm === WAKE_TIME) {
+        lastWakeDate = iso(now);
+        stopPlayback();
+        playQueue = [{ videoId: WAKE_VIDEO_ID, title: "שִׁיר הַבֹּקֶר" }];
+        queueIdx = 0;
+        startBackgroundPlay(playQueue[0]);
+      }
+    }
     var ds = iso(now);
     if (ds !== shownDate) {
       shownDate = ds;
@@ -1029,6 +1051,10 @@
 
   /* ---------- hidden background player: one drawn song per day ---------- */
   var ytPlayer = null, ytReady = false, isPlaying = false, ytApiRequested = false, pendingSong = null;
+  var playQueue = [], queueIdx = 0;
+  var WAKE_VIDEO_ID = "__WAKE_ID__"; // Nir's 07:35 wake-up song
+  var WAKE_TIME = "07:35";
+  var lastWakeDate = "";
   var SHEET_CSV_URL = "__SHEET_URL__"; // published-to-web CSV of the family song sheet
   var SHEET_ON = SHEET_CSV_URL.indexOf("http") === 0;
   var sheetSongs = null;
@@ -1081,9 +1107,25 @@
 
   function stopPlayback() {
     isPlaying = false;
+    playQueue = [];
+    queueIdx = 0;
     nowPlaying("");
     setPauseButton(null);
     if (ytPlayer && ytReady) { try { ytPlayer.stopVideo(); } catch (e) { /* not ready */ } }
+  }
+
+  function advanceQueue() {
+    queueIdx++;
+    if (queueIdx < playQueue.length) {
+      var next = playQueue[queueIdx];
+      isPlaying = true;
+      nowPlaying("מְנַגֵּן עַכְשָׁו: " + next.title);
+      setPauseButton("playing");
+      pendingSong = next;
+      if (ytPlayer && ytReady) ytPlayer.loadVideoById(next.videoId);
+    } else {
+      stopPlayback();
+    }
   }
 
   function startBackgroundPlay(song) {
@@ -1103,11 +1145,11 @@
           onReady: function (e) { ytReady = true; if (isPlaying) e.target.playVideo(); },
           onStateChange: function (e) {
             if (!window.YT) return;
-            if (e.data === YT.PlayerState.ENDED) stopPlayback();
+            if (e.data === YT.PlayerState.ENDED) advanceQueue();
             else if (e.data === YT.PlayerState.PAUSED && isPlaying) setPauseButton("paused");
             else if (e.data === YT.PlayerState.PLAYING) setPauseButton("playing");
           },
-          onError: function () { stopPlayback(); note("אי אפשר לנגן את השיר הזה מתוך הלוח."); }
+          onError: function () { advanceQueue(); } // unplayable song: move on to the next
         }
       });
     };
@@ -1120,12 +1162,12 @@
   function playDaily() {
     if (isPlaying) return; // no skipping, no restarting mid-song
     var today = iso(new Date());
+    var list = songsList();
     var pick = null;
     if (state.daily && state.daily.date === today && state.daily.videoId) {
       pick = { videoId: state.daily.videoId, title: state.daily.title || "שיר היום" };
     }
     if (!pick) { // first press today draws the song for the whole family
-      var list = songsList();
       if (!list.length) {
         if (SHEET_ON) { note("רשימת השירים בגוגל שיטס ריקה או לא זמינה."); }
         else {
@@ -1139,6 +1181,11 @@
       state.daily = { date: today, videoId: pick.videoId, title: pick.title };
       schedulePublish();
     }
+    // the daily song opens; the rest of the list follows in order
+    var rest = list.filter(function (x) { return x.videoId !== pick.videoId; })
+      .map(function (x) { return { videoId: x.videoId, title: x.title }; });
+    playQueue = [pick].concat(rest);
+    queueIdx = 0;
     startBackgroundPlay(pick);
   }
 
