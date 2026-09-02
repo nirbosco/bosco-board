@@ -1169,6 +1169,7 @@
       pendingSong = next;
       if (ytPlayer && ytReady) { ytPlayer.loadVideoById(next.videoId); nudgePlay(); }
       // not ready yet: onReady loads pendingSong itself
+      setTimeout(syncLabelToPlayer, 2500); // late videoData safety net
     } else {
       stopPlayback();
     }
@@ -1234,7 +1235,9 @@
     var list = songsList();
     var pick = null;
     if (state.daily && state.daily.date === today && state.daily.videoId) {
-      pick = { videoId: state.daily.videoId, title: state.daily.title || "שיר היום" };
+      var stillListed = !list.length || list.some(function (x) { return x.videoId === state.daily.videoId; });
+      if (stillListed) pick = { videoId: state.daily.videoId, title: state.daily.title || "שיר היום" };
+      // a drawn song that left the list (or was unplayable and removed) forces a fresh draw
     }
     if (!pick) { // first press today draws the song for the whole family
       if (!list.length) {
