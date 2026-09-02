@@ -1126,9 +1126,23 @@
       setPauseButton("playing");
       pendingSong = next;
       if (ytPlayer && ytReady) ytPlayer.loadVideoById(next.videoId);
+      // not ready yet: onReady loads pendingSong itself
     } else {
       stopPlayback();
     }
+  }
+
+  // the label follows what actually plays, not what we intended to play
+  function syncLabelToPlayer() {
+    try {
+      var vd = ytPlayer.getVideoData() || {};
+      if (!vd.video_id) return;
+      var match = null;
+      for (var k = 0; k < playQueue.length; k++) {
+        if (playQueue[k].videoId === vd.video_id) { match = playQueue[k]; queueIdx = k; break; }
+      }
+      nowPlaying("מְנַגֵּן עַכְשָׁו: " + (match ? match.title : (vd.title || "")));
+    } catch (e) { /* player mid-transition */ }
   }
 
   function startBackgroundPlay(song) {
@@ -1145,12 +1159,15 @@
         videoId: pendingSong.videoId,
         playerVars: { autoplay: 1, controls: 0, disablekb: 1, rel: 0 },
         events: {
-          onReady: function (e) { ytReady = true; if (isPlaying) e.target.playVideo(); },
+          onReady: function (e) {
+            ytReady = true;
+            if (isPlaying && pendingSong) e.target.loadVideoById(pendingSong.videoId);
+          },
           onStateChange: function (e) {
             if (!window.YT) return;
             if (e.data === YT.PlayerState.ENDED) advanceQueue();
             else if (e.data === YT.PlayerState.PAUSED && isPlaying) setPauseButton("paused");
-            else if (e.data === YT.PlayerState.PLAYING) setPauseButton("playing");
+            else if (e.data === YT.PlayerState.PLAYING) { setPauseButton("playing"); syncLabelToPlayer(); }
           },
           onError: function () { advanceQueue(); } // unplayable song: move on to the next
         }
