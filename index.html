@@ -1125,11 +1125,17 @@
       nowPlaying("מְנַגֵּן עַכְשָׁו: " + next.title);
       setPauseButton("playing");
       pendingSong = next;
-      if (ytPlayer && ytReady) ytPlayer.loadVideoById(next.videoId);
+      if (ytPlayer && ytReady) { ytPlayer.loadVideoById(next.videoId); nudgePlay(); }
       // not ready yet: onReady loads pendingSong itself
     } else {
       stopPlayback();
     }
+  }
+
+  function nudgePlay() { // some browsers cue instead of playing after a programmatic load
+    setTimeout(function () {
+      try { if (isPlaying && ytPlayer && ytReady && ytPlayer.getPlayerState() !== 1) ytPlayer.playVideo(); } catch (e) { }
+    }, 1500);
   }
 
   // the label follows what actually plays, not what we intended to play
@@ -1161,11 +1167,12 @@
         events: {
           onReady: function (e) {
             ytReady = true;
-            if (isPlaying && pendingSong) e.target.loadVideoById(pendingSong.videoId);
+            if (isPlaying && pendingSong) { e.target.loadVideoById(pendingSong.videoId); nudgePlay(); }
           },
           onStateChange: function (e) {
             if (!window.YT) return;
             if (e.data === YT.PlayerState.ENDED) advanceQueue();
+            else if (e.data === YT.PlayerState.CUED && isPlaying) e.target.playVideo();
             else if (e.data === YT.PlayerState.PAUSED && isPlaying) setPauseButton("paused");
             else if (e.data === YT.PlayerState.PLAYING) { setPauseButton("playing"); syncLabelToPlayer(); }
           },
