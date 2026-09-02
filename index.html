@@ -40,7 +40,21 @@
     border-left: 1px solid var(--hairline);
     min-width: 0;
   }
+  #top-row { display: flex; align-items: center; gap: 2vmin; }
+  #theme-toggle {
+    flex: none;
+    width: 5vmin; height: 5vmin;
+    border: 1.5px solid var(--hairline);
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 2.7vmin;
+    line-height: 1;
+    cursor: pointer;
+  }
+  #theme-toggle:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   #date-line {
+    flex: 1;
     font-size: 3.4vmin;
     font-weight: 400;
     letter-spacing: 0.02em;
@@ -399,6 +413,7 @@
       padding: 5vw 5vw 6vw;
     }
     #date-line { font-size: 4.2vw; }
+    #theme-toggle { width: 8.5vw; height: 8.5vw; font-size: 4.6vw; }
     #clock { font-size: 12vw; }
     #song-block { margin-top: 5vw; }
     #song-row { gap: 3vw; }
@@ -451,7 +466,10 @@
 
 <div id="board">
   <main id="now-pane">
-    <div id="date-line">—</div>
+    <div id="top-row">
+      <div id="date-line">—</div>
+      <button id="theme-toggle" type="button" aria-label="החלפה בין מצב בהיר לכהה">◐</button>
+    </div>
     <div id="clock">—</div>
     <section id="song-block">
       <div id="song-row">
@@ -850,13 +868,34 @@
   }
 
   var shownDate = "";
+  var THEME_KEY = "bosco-theme-override";
+  function nextThemeBoundary(now) {
+    var b = new Date(now);
+    var mins = now.getHours() * 60 + now.getMinutes();
+    if (mins < 390) b.setHours(6, 30, 0, 0);
+    else if (mins < 1140) b.setHours(19, 0, 0, 0);
+    else { b.setDate(b.getDate() + 1); b.setHours(6, 30, 0, 0); }
+    return b.getTime();
+  }
+  function themeOverride() {
+    try {
+      var o = JSON.parse(localStorage.getItem(THEME_KEY) || "null");
+      if (o && o.expires > Date.now()) return o.mode;
+      if (o) localStorage.removeItem(THEME_KEY);
+    } catch (e) { }
+    return null;
+  }
+  function applyTheme(now) {
+    var o = themeOverride();
+    document.body.classList.toggle("dark", o ? o === "dark" : isNight(now));
+  }
   function isNight(now) {
     var h = now.getHours(), m = now.getMinutes();
     return h >= 19 || h < 6 || (h === 6 && m < 30);
   }
   function tick() {
     var now = new Date();
-    document.body.classList.toggle("dark", isNight(now));
+    applyTheme(now);
     setPhrase(document.getElementById("clock"), timeInWords(now.getHours(), now.getMinutes()));
     if (WAKE_VIDEO_ID.indexOf("__") !== 0 && !schoolStatus(now) && lastWakeDate !== iso(now)) {
       var hm = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
@@ -1196,7 +1235,13 @@
     }
     if (!pick) { // first press today draws the song for the whole family
       if (!list.length) {
-        if (SHEET_ON) { note("רשימת השירים בגוגל שיטס ריקה או לא זמינה."); }
+        document.getElementById("theme-toggle").addEventListener("click", function () {
+      var now = new Date();
+      var mode = document.body.classList.contains("dark") ? "light" : "dark";
+      try { localStorage.setItem(THEME_KEY, JSON.stringify({ mode: mode, expires: nextThemeBoundary(now) })); } catch (e) { }
+      applyTheme(now);
+    });
+    if (SHEET_ON) { note("רשימת השירים בגוגל שיטס ריקה או לא זמינה."); }
         else {
           document.getElementById("song-manager").hidden = false;
           note("עוד אין שירים ברשימה. הוסיפו קישור יוטיוב ולחצו שוב על פליי.");
@@ -1283,6 +1328,12 @@
       window.claude.use("artifact").then(function (ns) { artifactNS = ns; });
     }
     if (SB_ON) cloudInit();
+    document.getElementById("theme-toggle").addEventListener("click", function () {
+      var now = new Date();
+      var mode = document.body.classList.contains("dark") ? "light" : "dark";
+      try { localStorage.setItem(THEME_KEY, JSON.stringify({ mode: mode, expires: nextThemeBoundary(now) })); } catch (e) { }
+      applyTheme(now);
+    });
     if (SHEET_ON) {
       document.getElementById("manage-songs").style.display = "none";
       document.getElementById("song-manager").hidden = true;
