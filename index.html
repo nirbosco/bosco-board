@@ -240,18 +240,22 @@
     margin-top: 1.2vmin;
     min-height: 4.5vmin;
   }
-  #now-playing { font-size: 2.7vmin; font-weight: 500; color: var(--ink); }
-  #pause-song {
+  #now-playing { font-size: 2.7vmin; font-weight: 500; color: var(--ink); min-width: 0; }
+  #mini-player { display: flex; align-items: center; gap: 1.2vmin; }
+  #mini-player[hidden] { display: none; }
+  #mini-player button {
     font-family: inherit;
     font-size: 2.5vmin;
+    line-height: 1;
     color: var(--ink);
     background: var(--paper);
     border: 1.5px solid var(--ink);
-    padding: 0.4vmin 2vmin;
+    width: 6vmin; height: 5vmin;
     cursor: pointer;
+    padding: 0;
   }
-  #pause-song:active { background: var(--ink); color: var(--paper); }
-  #pause-song:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  #mini-player button:active { background: var(--ink); color: var(--paper); }
+  #mini-player button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   /* ---- left pane: schedule ---- */
   #schedule-pane {
     flex: 14;
@@ -458,9 +462,9 @@
     #slider-nav { gap: 5vw; padding-top: 2.5vw; }
     #slider-nav button { font-size: 7vw; }
     .sdot { width: 2.4vw; height: 2.4vw; }
-    #now-playing-row { min-height: 7vw; gap: 3vw; }
+    #now-playing-row { min-height: 9vw; gap: 3vw; }
     #now-playing { font-size: 4.2vw; }
-    #pause-song { font-size: 4vw; padding: 1vw 3.5vw; }
+    #mini-player button { font-size: 4.4vw; width: 10.5vw; height: 9vw; }
   }
   @media (prefers-reduced-motion: no-preference) {
     .task .dot { transition: background 0.15s; }
@@ -481,8 +485,12 @@
         <button id="manage-songs" aria-label="ניהול רשימת השירים">+</button>
       </div>
       <div id="now-playing-row">
+        <div id="mini-player" dir="ltr" hidden>
+          <button id="prev-song" type="button" aria-label="השיר הקודם">«</button>
+          <button id="pause-song" type="button" aria-label="הפסקה או המשך">❚❚</button>
+          <button id="next-song" type="button" aria-label="השיר הבא">»</button>
+        </div>
         <span id="now-playing"></span>
-        <button id="pause-song" type="button" hidden>הַפְסָקָה</button>
       </div>
       <div id="song-manager" hidden>
         <ul id="song-list"></ul>
@@ -1142,10 +1150,17 @@
   }
 
   function setPauseButton(mode) { // "playing" | "paused" | null
-    var b = document.getElementById("pause-song");
-    if (!mode) { b.hidden = true; return; }
-    b.hidden = false;
-    b.textContent = mode === "paused" ? "הַמְשֵׁךְ" : "הַפְסָקָה";
+    var wrap = document.getElementById("mini-player");
+    if (!mode) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    document.getElementById("pause-song").textContent = mode === "paused" ? "▶" : "❚❚";
+  }
+
+  function jumpTo(idx) { // move the queue pointer and load that song
+    if (!playQueue.length) return;
+    idx = Math.max(0, Math.min(playQueue.length - 1, idx));
+    queueIdx = idx - 1; // advanceQueue increments back to idx
+    advanceQueue();
   }
 
   function nowPlaying(text) { document.getElementById("now-playing").textContent = text || ""; }
@@ -1273,6 +1288,20 @@
       if (ytPlayer.getPlayerState() === YT.PlayerState.PAUSED) ytPlayer.playVideo();
       else ytPlayer.pauseVideo();
     } catch (e) { /* player not ready */ }
+  });
+
+  document.getElementById("next-song").addEventListener("click", function () {
+    if (!isPlaying || queueIdx >= playQueue.length - 1) return;
+    jumpTo(queueIdx + 1);
+  });
+
+  document.getElementById("prev-song").addEventListener("click", function () {
+    if (!isPlaying) return;
+    try {
+      // more than a few seconds in: restart the current song, like every player
+      if (ytPlayer && ytReady && ytPlayer.getCurrentTime() > 4) { ytPlayer.seekTo(0, true); return; }
+    } catch (e) { }
+    jumpTo(Math.max(0, queueIdx - 1));
   });
 
   // click plays; a 3-second hold is the parents' hidden stop
