@@ -942,6 +942,14 @@
   var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kcmhpaWtjemtib3NlbnRjbG5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzYwMzcsImV4cCI6MjA5NTkxMjAzN30.KpSEtEHI-i2TQDfuCf8l4Dg1wQ-Ya-UdLEQ6VN3KxEQ"; // anon/public key, injected at deploy
   var SB_ON = !IS_ARTIFACT && SB_KEY.indexOf("__") !== 0;
   var BOARD_ID = "bosco-home";
+  // מפתח עריכה: מגיע פעם אחת בקישור (#k=...), נשמר במכשיר ונמחק מהכתובת
+  var EDIT_KEY_LS = "bosco-board-edit-key";
+  var EDIT_KEY = "";
+  try {
+    var km = /[#&]k=([0-9a-f]{16,64})/.exec(location.hash);
+    if (km) { localStorage.setItem(EDIT_KEY_LS, km[1]); history.replaceState(null, "", location.pathname + location.search); }
+    EDIT_KEY = localStorage.getItem(EDIT_KEY_LS) || "";
+  } catch (e) { /* private mode */ }
   var state = JSON.parse(document.getElementById("state").textContent);
   if (!IS_ARTIFACT) {
     try {
@@ -972,11 +980,13 @@
       .then(function (rows) { return rows[0] ? normalizeState(rows[0].state) : null; });
   }
   function cloudPush() {
-    return fetch(SB_URL + "/rest/v1/bosco_board?id=eq." + BOARD_ID, {
-      method: "PATCH",
-      headers: sbHeaders({ Prefer: "return=minimal" }),
-      body: JSON.stringify({ state: state, updated_at: new Date().toISOString() })
-    }).then(function (r) { if (!r.ok) throw new Error("push " + r.status); note(""); })
+    if (!EDIT_KEY) { note("המכשיר הזה במצב צפייה. השינוי נשמר רק כאן."); return Promise.resolve(); }
+    return fetch(SB_URL + "/rest/v1/rpc/bosco_board_save", {
+      method: "POST",
+      headers: sbHeaders(),
+      body: JSON.stringify({ p_id: BOARD_ID, p_key: EDIT_KEY, p_state: state })
+    }).then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("push " + r.status)); })
+      .then(function (ok) { note(ok ? "" : "מפתח העריכה במכשיר הזה לא תקין. השינוי נשמר רק כאן."); })
       .catch(function () { note("אין חיבור לענן כרגע. השינוי שמור במכשיר הזה ויעלה כשהחיבור יחזור."); });
   }
   function saveLocal() {
